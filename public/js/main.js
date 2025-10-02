@@ -192,8 +192,8 @@ function showExpenseDetail(id) {
                         </select>
                         
                         <div class="edit-form-buttons">
-                            <button type="submit">Update Expense</button>
-                            <button type="button" onclick="hideEditForm(${expense.id})" class="cancel-btn">Cancel</button>
+                            <button type="submit">✏️ แก้ไข</button>
+                            <button type="button" onclick="hideEditForm(${expense.id})" class="cancel-btn">❌ ยกเลิก</button>
                         </div>
                     </form>
                 </div>
