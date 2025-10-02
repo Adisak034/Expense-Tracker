@@ -8,15 +8,97 @@
 </head>
 <body>
     <header>
-        <h1>Expense Dashboard</h1>
+        <h1>แดชบอร์ดค่าใช้จ่าย</h1>
         <nav>
-            <a href="/">Home</a>
-            <a href="/add">Add Expense</a>
-            <a href="/dashboard">Dashboard</a>
+            <a href="/">หน้าแรก</a>
+            <a href="/add">เพิ่มค่าใช้จ่าย</a>
+            <a href="/dashboard">แดชบอร์ด</a>
         </nav>
     </header>
     <main>
-        <canvas id="expense-chart"></canvas>
+        <!-- Date Filter Section -->
+        <section class="date-filter-section">
+            <h2>เลือกช่วงเวลา</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-period="today">วันนี้</button>
+                <button class="filter-btn" data-period="week">สัปดาห์นี้</button>
+                <button class="filter-btn" data-period="month">เดือนนี้</button>
+                <button class="filter-btn" data-period="year">ปีนี้</button>
+                <button class="filter-btn" data-period="all">ทั้งหมด</button>
+            </div>
+        </section>
+
+        <!-- Summary Statistics -->
+        <section class="summary-section">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-icon">💰</div>
+                    <div class="card-content">
+                        <h3>ยอดรวมค่าใช้จ่าย</h3>
+                        <p class="card-value" id="total-amount">฿0</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">📊</div>
+                    <div class="card-content">
+                        <h3>จำนวนรายการ</h3>
+                        <p class="card-value" id="total-count">0</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">📈</div>
+                    <div class="card-content">
+                        <h3>ค่าเฉลี่ยต่อวัน</h3>
+                        <p class="card-value" id="daily-average">฿0</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">🏆</div>
+                    <div class="card-content">
+                        <h3>รายการสูงสุด</h3>
+                        <p class="card-value" id="max-expense">฿0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section">
+            <div class="chart-container">
+                <div class="chart-box">
+                    <h3>กราฟแท่งค่าใช้จ่าย</h3>
+                    <canvas id="expense-chart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3>สัดส่วนตามหมวดหมู่</h3>
+                    <canvas id="category-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-box full-width">
+                    <h3>แนวโน้มรายเดือน</h3>
+                    <canvas id="trend-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Expenses -->
+        <section class="recent-expenses-section">
+            <div class="section-header">
+                <h2>รายการค่าใช้จ่ายล่าสุด</h2>
+                <a href="/" class="view-all-btn">ดูทั้งหมด</a>
+            </div>
+            <div class="recent-expenses-table">
+                <div class="table-header">
+                    <div class="header-cell">วันที่</div>
+                    <div class="header-cell">รายการ</div>
+                    <div class="header-cell">จำนวน</div>
+                </div>
+                <div id="recent-expenses-list" class="table-body">
+                    <!-- จะถูกเติมด้วย JavaScript -->
+                </div>
+            </div>
+        </section>
     </main>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/js/dashboard.js"></script>

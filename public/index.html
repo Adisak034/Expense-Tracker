@@ -8,15 +8,109 @@
 </head>
 <body>
     <header>
-        <h1>Expense Tracker</h1>
+        <h1>รายการค่าใช้จ่าย</h1>
         <nav>
-            <a href="/">Home</a>
-            <a href="/add">Add Expense</a>
-            <a href="/dashboard">Dashboard</a>
+            <a href="/">หน้าแรก</a>
+            <a href="/add">เพิ่มค่าใช้จ่าย</a>
+            <a href="/dashboard">แดชบอร์ด</a>
         </nav>
     </header>
     <main>
-        <h2>รายการค่าใช้จ่าย</h2>
+        
+        <!-- Simple Search and Filter Section -->
+        <div class="search-filter-section">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="🔍 ค้นหารายการ..." class="search-input" />
+            </div>
+            
+            <div class="filter-buttons">
+                <button id="category-filter-btn" class="filter-btn" data-filter="category">
+                    🏷️ หมวดหมู่
+                </button>
+                <button id="date-filter-btn" class="filter-btn" data-filter="date">
+                    📅 วันที่
+                </button>
+                <button id="amount-filter-btn" class="filter-btn" data-filter="amount">
+                    💰 จำนวน
+                </button>
+                <button id="sort-filter-btn" class="filter-btn" data-filter="sort">
+                    📊 เรียง
+                </button>
+                <button id="clear-all-btn" class="clear-btn">
+                    🔄 ล้าง
+                </button>
+            </div>
+            
+            <!-- Hidden filter panels -->
+            <div id="category-panel" class="filter-panel" style="display: none;">
+                <div class="quick-filters">
+                    <button class="quick-filter-btn" data-category="" data-active="true">ทั้งหมด</button>
+                    <button class="quick-filter-btn" data-category="อาหาร">🍽️ อาหาร</button>
+                    <button class="quick-filter-btn" data-category="เดินทาง">🚗 เดินทาง</button>
+                    <button class="quick-filter-btn" data-category="ซื้อของ">🛍️ ซื้อของ</button>
+                    <button class="quick-filter-btn" data-category="ค่าบิล">📋 ค่าบิล</button>
+                    <button class="quick-filter-btn" data-category="บันเทิง">🎬 บันเทิง</button>
+                    <button class="quick-filter-btn" data-category="อื่นๆ">📝 อื่นๆ</button>
+                </div>
+                <select id="category-filter" style="display: none;">
+                    <option value="">ทั้งหมด</option>
+                    <option value="อาหาร">🍽️ อาหาร</option>
+                    <option value="เดินทาง">🚗 เดินทาง</option>
+                    <option value="ซื้อของ">🛍️ ซื้อของ</option>
+                    <option value="ค่าบิล">📋 ค่าบิล</option>
+                    <option value="บันเทิง">🎬 บันเทิง</option>
+                    <option value="อื่นๆ">📝 อื่นๆ</option>
+                </select>
+            </div>
+            
+            <div id="date-panel" class="filter-panel" style="display: none;">
+                <div class="quick-filters">
+                    <button class="quick-filter-btn date-quick" data-date-range="" data-active="true">ทั้งหมด</button>
+                    <button class="quick-filter-btn date-quick" data-date-range="today">วันนี้</button>
+                    <button class="quick-filter-btn date-quick" data-date-range="week">สัปดาห์นี้</button>
+                    <button class="quick-filter-btn date-quick" data-date-range="month">เดือนนี้</button>
+                    <button class="quick-filter-btn date-quick" data-date-range="year">ปีนี้</button>
+                </div>
+                <div class="date-input-group">
+                    <label for="date-from">จากวันที่:</label>
+                    <input type="date" id="date-from" />
+                </div>
+                <div class="date-input-group">
+                    <label for="date-to">ถึงวันที่:</label>
+                    <input type="date" id="date-to" />
+                </div>
+            </div>
+            
+            <div id="amount-panel" class="filter-panel amount-panel" style="display: none;">
+                <div class="quick-filters">
+                    <button class="quick-filter-btn amount-quick" data-amount-range="" data-active="true">ทั้งหมด</button>
+                    <button class="quick-filter-btn amount-quick" data-amount-range="0-50">฿0-50</button>
+                    <button class="quick-filter-btn amount-quick" data-amount-range="50-100">฿50-100</button>
+                    <button class="quick-filter-btn amount-quick" data-amount-range="100-500">฿100-500</button>
+                    <button class="quick-filter-btn amount-quick" data-amount-range="500-1000">฿500-1,000</button>
+                    <button class="quick-filter-btn amount-quick" data-amount-range="1000+">฿1,000+</button>
+                </div>
+                <div class="amount-input-group">
+                    <label for="amount-min">จำนวนขั้นต่ำ:</label>
+                    <input type="number" id="amount-min" placeholder="0" step="0.01" />
+                </div>
+                <div class="amount-input-group">
+                    <label for="amount-max">จำนวนสูงสุด:</label>
+                    <input type="number" id="amount-max" placeholder="1000000" step="0.01" />
+                </div>
+            </div>
+            
+            <div id="sort-panel" class="filter-panel" style="display: none;">
+                <select id="sort-by">
+                    <option value="date-desc">📅 ใหม่ → เก่า</option>
+                    <option value="date-asc">📅 เก่า → ใหม่</option>
+                    <option value="amount-desc">💰 มาก → น้อย</option>
+                    <option value="amount-asc">💰 น้อย → มาก</option>
+                    <option value="item-asc">📝 A → Z</option>
+                </select>
+            </div>
+        </div>
+        
         <div id="expense-list" class="expense-container">
             <!-- Expenses will be loaded here by JavaScript -->
         </div>

@@ -1,6 +1,7 @@
 // Simple main.js for expense list with detail navigation
 document.addEventListener('DOMContentLoaded', function() {
     loadExpenses();
+    initializeFilters();
 });
 
 let currentExpenses = [];
@@ -81,19 +82,19 @@ function displayExpenses(expenses) {
 // Get category emoji
 function getCategoryEmoji(category) {
     const emojiMap = {
+        // รองรับหมวดหมู่เก่า (ภาษาอังกฤษ) เพื่อความเข้ากันได้
         'Food': '🍽️',
         'Transport': '🚗',
         'Entertainment': '🎬',
         'Bills': '📋',
         'Shopping': '🛍️',
         'Other': '📝',
+        // หมวดหมู่ใหม่ (ภาษาไทย)
         'อาหาร': '🍽️',
         'เดินทาง': '🚗',
         'บันเทิง': '🎬',
-        'สุขภาพ': '🏥',
-        'ช้อปปิ้ง': '🛍️',
-        'บิล/ค่าใช้จ่าย': '📋',
-        'การศึกษา': '📚',
+        'ค่าบิล': '📋',
+        'ซื้อของ': '🛍️',
         'อื่นๆ': '📝'
     };
     return emojiMap[category] || '📝';
@@ -171,23 +172,23 @@ function showExpenseDetail(id) {
                 <div class="edit-form-container" id="edit-form-${expense.id}" style="display: none;">
                     <h3>✏️ Edit Expense</h3>
                     <form class="simple-edit-form" onsubmit="updateExpense(event, ${expense.id})">
-                        <label for="edit-item-${expense.id}">Item:</label>
+                        <label for="edit-item-${expense.id}">รายการ:</label>
                         <input type="text" id="edit-item-${expense.id}" name="item" value="${expense.item}" required>
                         
-                        <label for="edit-amount-${expense.id}">Amount:</label>
+                        <label for="edit-amount-${expense.id}">จำนวน:</label>
                         <input type="number" id="edit-amount-${expense.id}" name="amount" value="${expense.amount}" step="0.01" required>
                         
-                        <label for="edit-date-${expense.id}">Date:</label>
+                        <label for="edit-date-${expense.id}">วันที่:</label>
                         <input type="date" id="edit-date-${expense.id}" name="expense_date" value="${expense.expense_date}" required>
                         
-                        <label for="edit-category-${expense.id}">Category:</label>
+                        <label for="edit-category-${expense.id}">หมวดหมู่:</label>
                         <select id="edit-category-${expense.id}" name="category" required>
-                            <option value="Food" ${expense.category === 'Food' ? 'selected' : ''}>Food</option>
-                            <option value="Transport" ${expense.category === 'Transport' ? 'selected' : ''}>Transport</option>
-                            <option value="Shopping" ${expense.category === 'Shopping' ? 'selected' : ''}>Shopping</option>
-                            <option value="Bills" ${expense.category === 'Bills' ? 'selected' : ''}>Bills</option>
-                            <option value="Entertainment" ${expense.category === 'Entertainment' ? 'selected' : ''}>Entertainment</option>
-                            <option value="Other" ${expense.category === 'Other' ? 'selected' : ''}>Other</option>
+                            <option value="อาหาร" ${expense.category === 'อาหาร' || expense.category === 'Food' ? 'selected' : ''}>🍽️ อาหาร</option>
+                            <option value="เดินทาง" ${expense.category === 'เดินทาง' || expense.category === 'Transport' ? 'selected' : ''}>🚗 เดินทาง</option>
+                            <option value="ซื้อของ" ${expense.category === 'ซื้อของ' || expense.category === 'Shopping' ? 'selected' : ''}>🛍️ ซื้อของ</option>
+                            <option value="ค่าบิล" ${expense.category === 'ค่าบิล' || expense.category === 'Bills' ? 'selected' : ''}>📋 ค่าบิล</option>
+                            <option value="บันเทิง" ${expense.category === 'บันเทิง' || expense.category === 'Entertainment' ? 'selected' : ''}>🎬 บันเทิง</option>
+                            <option value="อื่นๆ" ${expense.category === 'อื่นๆ' || expense.category === 'Other' ? 'selected' : ''}>📝 อื่นๆ</option>
                         </select>
                         
                         <div class="edit-form-buttons">
@@ -311,6 +312,390 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
+// Filter and Search Variables
+let filteredExpenses = [];
+let currentFilters = {
+    search: '',
+    category: '',
+    dateFrom: '',
+    dateTo: '',
+    amountMin: '',
+    amountMax: '',
+    sortBy: 'date-desc'
+};
+
+// Initialize filter functionality
+function initializeFilters() {
+    const searchInput = document.getElementById('search-input');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    
+    // Filter buttons and panels
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const filterPanels = document.querySelectorAll('.filter-panel');
+    
+    // Real-time search
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentFilters.search = e.target.value;
+            applyFilters();
+        });
+    }
+    
+    // Clear all filters
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', clearAllFilters);
+    }
+    
+    // Filter button handlers
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const filterType = e.target.getAttribute('data-filter');
+            toggleFilterPanel(filterType);
+        });
+    });
+    
+    // Add event listeners to all filter inputs
+    const filterInputs = ['category-filter', 'date-from', 'date-to', 'amount-min', 'amount-max', 'sort-by'];
+    filterInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('change', applyFilters);
+        }
+    });
+
+    // Quick filter buttons
+    initializeQuickFilters();
+}
+
+// Initialize quick filter buttons
+function initializeQuickFilters() {
+    // Category quick filters
+    const categoryQuickBtns = document.querySelectorAll('.quick-filter-btn[data-category]');
+    categoryQuickBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remove active class from all category quick filters
+            categoryQuickBtns.forEach(b => b.removeAttribute('data-active'));
+            // Add active class to clicked button
+            e.target.setAttribute('data-active', 'true');
+            
+            const category = e.target.getAttribute('data-category');
+            document.getElementById('category-filter').value = category;
+            currentFilters.category = category;
+            applyFilters();
+        });
+    });
+
+    // Date quick filters
+    const dateQuickBtns = document.querySelectorAll('.quick-filter-btn[data-date-range]');
+    dateQuickBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remove active class from all date quick filters
+            dateQuickBtns.forEach(b => b.removeAttribute('data-active'));
+            // Add active class to clicked button
+            e.target.setAttribute('data-active', 'true');
+            
+            const dateRange = e.target.getAttribute('data-date-range');
+            applyQuickDateFilter(dateRange);
+        });
+    });
+
+    // Amount quick filters
+    const amountQuickBtns = document.querySelectorAll('.quick-filter-btn[data-amount-range]');
+    amountQuickBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Remove active class from all amount quick filters
+            amountQuickBtns.forEach(b => b.removeAttribute('data-active'));
+            // Add active class to clicked button
+            e.target.setAttribute('data-active', 'true');
+            
+            const amountRange = e.target.getAttribute('data-amount-range');
+            applyQuickAmountFilter(amountRange);
+        });
+    });
+}
+
+// Apply quick date filter
+function applyQuickDateFilter(range) {
+    const today = new Date();
+    let dateFrom = '';
+    let dateTo = '';
+
+    switch(range) {
+        case 'today':
+            dateFrom = dateTo = today.toISOString().split('T')[0];
+            break;
+        case 'week':
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            dateFrom = weekStart.toISOString().split('T')[0];
+            dateTo = today.toISOString().split('T')[0];
+            break;
+        case 'month':
+            dateFrom = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+            dateTo = today.toISOString().split('T')[0];
+            break;
+        case 'year':
+            dateFrom = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+            dateTo = today.toISOString().split('T')[0];
+            break;
+        case '':
+        default:
+            dateFrom = dateTo = '';
+            break;
+    }
+
+    document.getElementById('date-from').value = dateFrom;
+    document.getElementById('date-to').value = dateTo;
+    currentFilters.dateFrom = dateFrom;
+    currentFilters.dateTo = dateTo;
+    applyFilters();
+}
+
+// Apply quick amount filter
+function applyQuickAmountFilter(range) {
+    let amountMin = '';
+    let amountMax = '';
+
+    switch(range) {
+        case '0-50':
+            amountMin = '0';
+            amountMax = '50';
+            break;
+        case '50-100':
+            amountMin = '50';
+            amountMax = '100';
+            break;
+        case '100-500':
+            amountMin = '100';
+            amountMax = '500';
+            break;
+        case '500-1000':
+            amountMin = '500';
+            amountMax = '1000';
+            break;
+        case '1000+':
+            amountMin = '1000';
+            amountMax = '';
+            break;
+        case '':
+        default:
+            amountMin = amountMax = '';
+            break;
+    }
+
+    document.getElementById('amount-min').value = amountMin;
+    document.getElementById('amount-max').value = amountMax;
+    currentFilters.amountMin = amountMin;
+    currentFilters.amountMax = amountMax;
+    applyFilters();
+}
+
+// Toggle filter panels
+function toggleFilterPanel(filterType) {
+    const panel = document.getElementById(`${filterType}-panel`);
+    const btn = document.getElementById(`${filterType}-filter-btn`);
+    const allPanels = document.querySelectorAll('.filter-panel');
+    const allBtns = document.querySelectorAll('.filter-btn');
+    
+    // Close all other panels and remove active state
+    allPanels.forEach(p => {
+        if (p !== panel) {
+            p.style.display = 'none';
+        }
+    });
+    
+    allBtns.forEach(b => {
+        if (b !== btn) {
+            b.classList.remove('active');
+        }
+    });
+    
+    // Toggle current panel
+    if (panel) {
+        const isVisible = panel.style.display !== 'none';
+        panel.style.display = isVisible ? 'none' : 'block';
+        btn.classList.toggle('active', !isVisible);
+        
+        // Auto-hide after a delay if not interacting
+        if (!isVisible) {
+            setTimeout(() => {
+                if (!panel.matches(':hover') && !btn.matches(':hover')) {
+                    panel.style.display = 'none';
+                    btn.classList.remove('active');
+                }
+            }, 3000);
+        }
+    }
+}
+
+// Clear all filters
+function clearAllFilters() {
+    currentFilters = {
+        search: '',
+        category: '',
+        dateFrom: '',
+        dateTo: '',
+        amountMin: '',
+        amountMax: '',
+        sortBy: 'date-desc'
+    };
+    
+    // Clear all input values
+    document.getElementById('search-input').value = '';
+    document.getElementById('category-filter').value = '';
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value = '';
+    document.getElementById('amount-min').value = '';
+    document.getElementById('amount-max').value = '';
+    document.getElementById('sort-by').value = 'date-desc';
+    
+    // Reset quick filter buttons
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.removeAttribute('data-active');
+    });
+    
+    // Set default active buttons (ทั้งหมด)
+    document.querySelectorAll('.quick-filter-btn[data-category=""]').forEach(btn => {
+        btn.setAttribute('data-active', 'true');
+    });
+    document.querySelectorAll('.quick-filter-btn[data-date-range=""]').forEach(btn => {
+        btn.setAttribute('data-active', 'true');
+    });
+    document.querySelectorAll('.quick-filter-btn[data-amount-range=""]').forEach(btn => {
+        btn.setAttribute('data-active', 'true');
+    });
+    
+    // Clear filter summary
+    const existingSummary = document.querySelector('.filter-summary');
+    if (existingSummary) {
+        existingSummary.remove();
+    }
+    
+    // Show all expenses
+    displayExpenses(currentExpenses);
+    showToast('ล้างตัวกรองเรียบร้อยแล้ว', 'success');
+}
+
+// Apply all active filters
+function applyFilters() {
+    // Get current filter values
+    currentFilters.search = document.getElementById('search-input').value.toLowerCase();
+    currentFilters.category = document.getElementById('category-filter').value;
+    currentFilters.dateFrom = document.getElementById('date-from').value;
+    currentFilters.dateTo = document.getElementById('date-to').value;
+    currentFilters.amountMin = document.getElementById('amount-min').value;
+    currentFilters.amountMax = document.getElementById('amount-max').value;
+    currentFilters.sortBy = document.getElementById('sort-by').value;
+    
+    // Start with all expenses
+    filteredExpenses = [...currentExpenses];
+    
+    // Apply search filter
+    if (currentFilters.search) {
+        filteredExpenses = filteredExpenses.filter(expense => 
+            expense.item.toLowerCase().includes(currentFilters.search) ||
+            expense.category.toLowerCase().includes(currentFilters.search)
+        );
+    }
+    
+    // Apply category filter
+    if (currentFilters.category) {
+        filteredExpenses = filteredExpenses.filter(expense => 
+            expense.category === currentFilters.category
+        );
+    }
+    
+    // Apply date range filter
+    if (currentFilters.dateFrom) {
+        filteredExpenses = filteredExpenses.filter(expense => 
+            expense.expense_date >= currentFilters.dateFrom
+        );
+    }
+    
+    if (currentFilters.dateTo) {
+        filteredExpenses = filteredExpenses.filter(expense => 
+            expense.expense_date <= currentFilters.dateTo
+        );
+    }
+    
+    // Apply amount range filter
+    if (currentFilters.amountMin) {
+        const minAmount = parseFloat(currentFilters.amountMin);
+        filteredExpenses = filteredExpenses.filter(expense => 
+            parseFloat(expense.amount) >= minAmount
+        );
+    }
+    
+    if (currentFilters.amountMax) {
+        const maxAmount = parseFloat(currentFilters.amountMax);
+        filteredExpenses = filteredExpenses.filter(expense => 
+            parseFloat(expense.amount) <= maxAmount
+        );
+    }
+    
+    // Apply sorting
+    applySorting();
+    
+    // Display filtered results
+    displayExpenses(filteredExpenses);
+    
+    // Show filter summary
+    showFilterSummary();
+}
+
+// Apply sorting to filtered expenses
+function applySorting() {
+    switch (currentFilters.sortBy) {
+        case 'date-desc':
+            filteredExpenses.sort((a, b) => new Date(b.expense_date) - new Date(a.expense_date));
+            break;
+        case 'date-asc':
+            filteredExpenses.sort((a, b) => new Date(a.expense_date) - new Date(b.expense_date));
+            break;
+        case 'amount-desc':
+            filteredExpenses.sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+            break;
+        case 'amount-asc':
+            filteredExpenses.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
+            break;
+        case 'item-asc':
+            filteredExpenses.sort((a, b) => a.item.localeCompare(b.item));
+            break;
+    }
+}
+
+// Show filter summary
+function showFilterSummary() {
+    const totalOriginal = currentExpenses.length;
+    const totalFiltered = filteredExpenses.length;
+    
+    if (totalFiltered < totalOriginal) {
+        const summaryText = `แสดง ${totalFiltered} จาก ${totalOriginal} รายการ`;
+        
+        // Check if there's already a filter summary
+        let summaryDiv = document.querySelector('.filter-summary');
+        if (!summaryDiv) {
+            summaryDiv = document.createElement('div');
+            summaryDiv.className = 'filter-summary';
+            const expenseList = document.getElementById('expense-list');
+            expenseList.parentNode.insertBefore(summaryDiv, expenseList);
+        }
+        
+        summaryDiv.innerHTML = `
+            <div class="summary-text">
+                📊 ${summaryText}
+                <button onclick="clearAllFilters()" class="quick-clear-btn">ล้างตัวกรอง</button>
+            </div>
+        `;
+    } else {
+        // Remove summary if showing all items
+        const existingSummary = document.querySelector('.filter-summary');
+        if (existingSummary) {
+            existingSummary.remove();
+        }
+    }
+}
+
 // Global functions
 window.showExpenseDetail = showExpenseDetail;
 window.showEditForm = showEditForm;
@@ -318,3 +703,5 @@ window.hideEditForm = hideEditForm;
 window.updateExpense = updateExpense;
 window.deleteExpense = deleteExpense;
 window.loadExpenses = loadExpenses;
+window.clearAllFilters = clearAllFilters;
+window.applyFilters = applyFilters;
