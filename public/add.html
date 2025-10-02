@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Expense</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Add Expense</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/add">Add Expense</a>
+            <a href="/dashboard">Dashboard</a>
+        </nav>
+    </header>
+    <main>
+        <form id="add-expense-form">
+            <label for="item">Item:</label>
+            <input type="text" id="item" name="item" required>
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" name="amount" step="0.01" required>
+            <label for="expense_date">Date:</label>
+            <input type="date" id="expense_date" name="expense_date" required>
+            <label for="category">Category:</label>
+            <select id="category" name="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Bills">Bills</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Other">Other</option>
+            </select>
+            <button type="submit">Add Expense</button>
+        </form>
+        
+        <h2>สแกนรูปภาพ</h2>
+        <div class="scan-section">
+            <button id="scan-btn" class="scan-button">📷 สแกนรูปภาพ</button>
+        </div>
+        
+        <input type="file" id="ocr-file-gallery" accept="image/*" style="display: none;">
+        <input type="file" id="ocr-file-camera" accept="image/*" capture="camera" style="display: none;">
+        
+        <!-- Option Modal -->
+        <div id="option-modal" class="option-modal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="option-content">
+                <div id="selection-step">
+                    <h3>เลือกวิธีการสแกน</h3>
+                    <div class="option-buttons">
+                        <button id="camera-option-btn" class="option-button">
+                            <span class="option-icon">📷</span>
+                            <span class="option-text">ถ่ายรูปใหม่</span>
+                        </button>
+                        <button id="gallery-option-btn" class="option-button">
+                            <span class="option-icon">🖼️</span>
+                            <span class="option-text">เลือกจากแกลเลอรี่</span>
+                        </button>
+                    </div>
+                    <button id="close-option-btn" class="close-option-button">ยกเลิก</button>
+                </div>
+                
+                <div id="preview-step" style="display: none;">
+                    <h3>ตรวจสอบรูปภาพ</h3>
+                    <div id="modal-image-preview"></div>
+                    <div class="preview-buttons">
+                        <button id="upload-from-modal" class="upload-modal-button">📤 อัปโหลดและสแกน</button>
+                        <button id="back-to-selection" class="back-button">🔄 เลือกใหม่</button>
+                        <button id="close-preview-btn" class="close-option-button">ยกเลิก</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+        <button id="upload-ocr" style="display: none;">อัปโหลดและสแกน</button>
+        <div id="selected-image-preview"></div>
+        <div id="ocr-result"></div>
+    </main>
+    <script src="/js/add.js"></script>
+</body>
+</html>

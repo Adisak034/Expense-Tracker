@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>Expense Tracker</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/add">Add Expense</a>
+            <a href="/dashboard">Dashboard</a>
+        </nav>
+    </header>
+    <main>
+        <h2>รายการค่าใช้จ่าย</h2>
+        <div id="expense-list" class="expense-container">
+            <!-- Expenses will be loaded here by JavaScript -->
+        </div>
+        
+        <!-- Edit Modal -->
+        <div id="edit-modal" class="edit-modal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="edit-content">
+                <h3>แก้ไขรายการ</h3>
+                <form id="edit-expense-form">
+                    <input type="hidden" id="edit-id" name="id">
+                    <label for="edit-item">รายการ:</label>
+                    <input type="text" id="edit-item" name="item" required>
+                    <label for="edit-amount">จำนวนเงิน:</label>
+                    <input type="number" id="edit-amount" name="amount" step="0.01" required>
+                    <label for="edit-date">วันที่:</label>
+                    <input type="date" id="edit-date" name="expense_date" required>
+                    <label for="edit-category">หมวดหมู่:</label>
+                    <select id="edit-category" name="category" required>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <div class="modal-buttons">
+                        <button type="submit" class="save-button">💾 บันทึก</button>
+                        <button type="button" id="cancel-edit" class="cancel-button">❌ ยกเลิก</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Delete Confirmation Modal -->
+        <div id="delete-modal" class="delete-modal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="delete-content">
+                <h3>ยืนยันการลบ</h3>
+                <p>คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?</p>
+                <div id="delete-item-info"></div>
+                <div class="modal-buttons">
+                    <button id="confirm-delete" class="delete-button">🗑️ ลบ</button>
+                    <button id="cancel-delete" class="cancel-button">❌ ยกเลิก</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/main.js?v=31"></script>
+</body>
+</html>
