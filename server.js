@@ -34,7 +34,7 @@ const upload = multer({
 });
 
 // IMPORTANT: Replace with your actual n8n webhook URL
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook-test/upload-webhook';
+const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/upload-webhook';
 
 // --- API Routes ---
 

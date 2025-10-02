@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Show loading in modal and close it
         closeOptionModal();
-        ocrResultDiv.innerHTML = '<div class="loading-message">กำลังอัปโหลดและประมวลผล... <span class="loading-dots">...</span></div>';
+        ocrResultDiv.innerHTML = '<div class="loading-message">กำลังอัปโหลดและประมวลผล <span class="loading-dots">...</span></div>';
 
         fetch('/api/ocr/upload', {
             method: 'POST',
@@ -259,10 +259,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Convert date from "DD MM YY" format to "YYYY-MM-DD" format
+    // Convert date from various formats to "YYYY-MM-DD" format
     function convertDateFormat(dateString) {
         try {
-            // Handle formats like "18 07 25" or "18/07/25" or "18-07-25"
+            // Handle formats like "18 07 25", "18/07/25", "18-07-25", "18 07 2567", "18/07/2024"
             const cleanDate = dateString.replace(/[\/\-\s]+/g, ' ').trim();
             const parts = cleanDate.split(' ');
             
@@ -271,8 +271,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 let month = parts[1].padStart(2, '0');
                 let year = parts[2];
                 
-                // Convert 2-digit year to 4-digit year
+                // Handle different year formats
                 if (year.length === 2) {
+                    // 2-digit year: convert to 4-digit
                     const currentYear = new Date().getFullYear();
                     const currentCentury = Math.floor(currentYear / 100) * 100;
                     const yearNum = parseInt(year);
@@ -283,15 +284,101 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         year = (currentCentury + yearNum).toString();
                     }
+                } else if (year.length === 4) {
+                    // 4-digit year: check if it's Buddhist Era (พ.ศ.) or Christian Era (ค.ศ.)
+                    const yearNum = parseInt(year);
+                    
+                    // Buddhist Era years are typically 2500+ (543 years ahead of Christian Era)
+                    // If year is between 2500-2700, assume it's Buddhist Era and convert to Christian Era
+                    if (yearNum >= 2500 && yearNum <= 2700) {
+                        year = (yearNum - 543).toString();
+                    }
+                    // If year is between 1900-2100, assume it's already Christian Era
+                    else if (yearNum >= 1900 && yearNum <= 2100) {
+                        year = yearNum.toString();
+                    }
+                    // If year seems invalid, use current year
+                    else {
+                        console.warn(`Invalid year detected: ${yearNum}, using current year`);
+                        year = new Date().getFullYear().toString();
+                    }
                 }
                 
-                return `${year}-${month}-${day}`;
+                // Validate the converted date
+                const convertedDate = `${year}-${month}-${day}`;
+                const dateObj = new Date(convertedDate);
+                
+                // Check if the date is valid
+                if (dateObj.getFullYear() == year && 
+                    dateObj.getMonth() == (parseInt(month) - 1) && 
+                    dateObj.getDate() == parseInt(day)) {
+                    return convertedDate;
+                }
             }
+            
+            // Try to handle other formats like "DD/MM/YYYY" or "DD-MM-YYYY"
+            const altFormats = [
+                /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/,  // DD/MM/YY or DD/MM/YYYY
+                /(\d{2,4})[\/\-](\d{1,2})[\/\-](\d{1,2})/   // YYYY/MM/DD
+            ];
+            
+            for (const format of altFormats) {
+                const match = dateString.match(format);
+                if (match) {
+                    let [, part1, part2, part3] = match;
+                    
+                    // Determine which format it is based on the first part
+                    let day, month, year;
+                    
+                    if (part1.length === 4) {
+                        // YYYY/MM/DD format
+                        year = part1;
+                        month = part2.padStart(2, '0');
+                        day = part3.padStart(2, '0');
+                    } else {
+                        // DD/MM/YYYY format
+                        day = part1.padStart(2, '0');
+                        month = part2.padStart(2, '0');
+                        year = part3;
+                    }
+                    
+                    // Handle Buddhist Era conversion for 4-digit years
+                    if (year.length === 4) {
+                        const yearNum = parseInt(year);
+                        if (yearNum >= 2500 && yearNum <= 2700) {
+                            year = (yearNum - 543).toString();
+                        }
+                    } else if (year.length === 2) {
+                        // Convert 2-digit to 4-digit
+                        const currentYear = new Date().getFullYear();
+                        const currentCentury = Math.floor(currentYear / 100) * 100;
+                        const yearNum = parseInt(year);
+                        
+                        if (yearNum > (currentYear % 100)) {
+                            year = (currentCentury - 100 + yearNum).toString();
+                        } else {
+                            year = (currentCentury + yearNum).toString();
+                        }
+                    }
+                    
+                    const convertedDate = `${year}-${month}-${day}`;
+                    const dateObj = new Date(convertedDate);
+                    
+                    // Validate date
+                    if (dateObj.getFullYear() == year && 
+                        dateObj.getMonth() == (parseInt(month) - 1) && 
+                        dateObj.getDate() == parseInt(day)) {
+                        return convertedDate;
+                    }
+                }
+            }
+            
         } catch (error) {
             console.error('Error converting date:', error);
         }
         
-        // Fallback to current date
+        // Fallback to current date if all parsing fails
+        console.warn(`Could not parse date: "${dateString}", using current date`);
         const now = new Date();
         return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     }
