@@ -34,10 +34,35 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.message === 'success') {
                 addExpenseForm.reset();
-                alert('Expense added successfully!');
+                Swal.fire({
+                    title: 'สำเร็จ! 🎉',
+                    text: 'เพิ่มรายจ่ายเรียบร้อยแล้ว',
+                    icon: 'success',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#ff7300',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
             } else {
-                alert(data.error || 'Failed to add expense.');
+                Swal.fire({
+                    title: 'เกิดข้อผิดพลาด! ❌',
+                    text: data.error || 'ไม่สามารถเพิ่มรายจ่ายได้',
+                    icon: 'error',
+                    confirmButtonText: 'ลองใหม่',
+                    confirmButtonColor: '#ff7300'
+                });
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'เกิดข้อผิดพลาด! ❌',
+                text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+                icon: 'error',
+                confirmButtonText: 'ลองใหม่',
+                confirmButtonColor: '#ff7300'
+            });
         });
     });
 
@@ -222,8 +247,24 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Auto-fill form fields with structured data
             autoFillFormFromOCR(ocrData);
+            
+            // Show success alert
+            Swal.fire({
+                title: 'สแกนสำเร็จ! 📄✨',
+                text: 'ระบบได้กรอกข้อมูลจากรูปภาพให้แล้ว กรุณาตรวจสอบความถูกต้อง',
+                icon: 'success',
+                confirmButtonText: 'ตกลง',
+                confirmButtonColor: '#ff7300'
+            });
         } else {
             ocrResultDiv.innerHTML = 'ไม่สามารถแยกข้อความจากรูปภาพได้';
+            Swal.fire({
+                title: 'ไม่พบข้อมูล 📄❌',
+                text: 'ไม่สามารถแยกข้อความจากรูปภาพได้ กรุณาลองใหม่',
+                icon: 'warning',
+                confirmButtonText: 'ตกลง',
+                confirmButtonColor: '#ff7300'
+            });
         }
     }
 

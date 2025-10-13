@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - Expense Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ff9500 0%, #ff7300 100%);
+            padding: 1rem;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+
+        .auth-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .auth-title {
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff7300;
+            box-shadow: 0 0 0 3px rgba(255, 115, 0, 0.1);
+        }
+
+        .auth-btn {
+            background: #ff7300;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .auth-btn:hover {
+            background: #e65c00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 115, 0, 0.4);
+        }
+
+        .auth-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-link {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .auth-link a {
+            color: #ff7300;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #d32f2f;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">💰</div>
+            <h1 class="auth-title">เข้าสู่ระบบ</h1>
+            <p class="auth-subtitle">ยินดีต้อนรับกลับมา!</p>
+            
+            <div id="message-container"></div>
+            
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="usernameOrEmail">ชื่อผู้ใช้ หรือ อีเมล</label>
+                    <input type="text" id="usernameOrEmail" name="usernameOrEmail" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">รหัสผ่าน</label>
+                    <input type="password" id="password" name="password" class="form-input" required>
+                </div>
+                
+                <button type="submit" id="login-btn" class="auth-btn">เข้าสู่ระบบ</button>
+            </form>
+            
+            <div class="auth-link">
+                <p>ยังไม่มีบัญชี? <a href="/register">สมัครสมาชิก</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const messageContainer = document.getElementById('message-container');
+
+            function showMessage(message, type = 'error') {
+                messageContainer.innerHTML = `
+                    <div class="${type}-message">
+                        ${message}
+                    </div>
+                `;
+            }
+
+            function clearMessage() {
+                messageContainer.innerHTML = '';
+            }
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                clearMessage();
+                
+                const formData = new FormData(loginForm);
+                const loginData = {
+                    usernameOrEmail: formData.get('usernameOrEmail'),
+                    password: formData.get('password')
+                };
+
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(loginData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showMessage('เข้าสู่ระบบสำเร็จ! กำลังเปลี่ยนเส้นทาง...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    } else {
+                        showMessage(result.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+                    }
+                } catch (error) {
+                    showMessage('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+                } finally {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'เข้าสู่ระบบ';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

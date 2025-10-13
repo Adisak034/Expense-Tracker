@@ -1,35 +1,76 @@
-const sqlite3 = require('sqlite3').verbose();
+const mysql = require('mysql2/promise');
 
-const DBSOURCE = "db.sqlite";
-
-let db = new sqlite3.Database(DBSOURCE, (err) => {
-    if (err) {
-      // Cannot open database
-      console.error(err.message)
-      throw err
-    }else{
-        console.log('Connected to the SQLite database.');
-        db.run(`CREATE TABLE expenses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            item text, 
-            amount real, 
-            expense_date date,
-            category text
-            )`,
-        (err) => {
-            if (err) {
-                // Table already created
-            }else{
-                // Table just created, creating some rows
-                const insert = 'INSERT INTO expenses (item, amount, expense_date, category) VALUES (?,?,?,?)'
-                db.run(insert, ["กาแฟ", 85.00, "2025-10-01", "อาหาร"])
-                db.run(insert, ["ค่ารถเมล์", 15.00, "2025-10-01", "เดินทาง"])
-                db.run(insert, ["ข้าวกล่อง", 45.00, "2025-09-30", "อาหาร"])
-                db.run(insert, ["เสื้อยืด", 350.00, "2025-09-29", "ซื้อของ"])
-                db.run(insert, ["ค่าไฟฟ้า", 850.00, "2025-09-28", "ค่าบิล"])
-            }
-        });  
-    }
+// MySQL configuration
+const pool = mysql.createPool({
+  user: process.env.DB_USER || 'expense_user',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'expense_tracker',
+  password: process.env.DB_PASSWORD || 'mypassword',
+  port: process.env.DB_PORT || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-module.exports = db;
+// Initialize database tables
+async function initializeDatabase() {
+  try {
+    // Create users table
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create expenses table with user_id foreign key
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        item TEXT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        expense_date DATE NOT NULL,
+        category VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    console.log('MySQL database tables initialized successfully');
+    
+    // Check if we need sample data (only if no users exist)
+    const [rows] = await pool.execute('SELECT COUNT(*) as count FROM users');
+    if (parseInt(rows[0].count) === 0) {
+      console.log('No users found, database ready for first registration');
+    }
+
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    throw error;
+  }
+}
+
+// Test database connection
+async function testConnection() {
+  try {
+    await pool.execute('SELECT NOW()');
+    console.log('Connected to MySQL database successfully');
+    return true;
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    return false;
+  }
+}
+
+// Initialize on startup
+testConnection().then(success => {
+  if (success) {
+    initializeDatabase();
+  }
+});
+
+module.exports = pool;

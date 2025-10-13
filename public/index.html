@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <header>
@@ -13,7 +14,12 @@
             <a href="/">หน้าแรก</a>
             <a href="/add">เพิ่มค่าใช้จ่าย</a>
             <a href="/dashboard">แดชบอร์ด</a>
+            <a href="/profile">ข้อมูลส่วนตัว</a>
         </nav>
+        <div class="user-info">
+            <span id="user-welcome"></span>
+            <button id="logout-btn" class="logout-btn">ออกจากระบบ</button>
+        </div>
     </header>
     <main>
         

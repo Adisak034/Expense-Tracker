@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อมูลส่วนตัว - Expense Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .profile-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .profile-avatar {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .profile-title {
+            color: #333;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff7300;
+            box-shadow: 0 0 0 3px rgba(255, 115, 0, 0.1);
+        }
+
+        .form-input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #ff7300;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e65c00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 115, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .profile-stats {
+            background: linear-gradient(135deg, #ff7300, #ff9500);
+            color: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .password-section {
+            border-top: 2px solid #f0f0f0;
+            padding-top: 2rem;
+            margin-top: 2rem;
+        }
+
+        .password-section h3 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .danger-zone {
+            border: 2px solid #dc3545;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            background: #fff5f5;
+        }
+
+        .danger-zone h3 {
+            color: #dc3545;
+            margin: 0 0 1rem 0;
+        }
+
+        .danger-zone p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                margin: 1rem auto;
+            }
+
+            .profile-card {
+                padding: 1.5rem;
+            }
+
+            .profile-actions {
+                gap: 0.75rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ข้อมูลส่วนตัว</h1>
+        <nav>
+            <a href="/">หน้าแรก</a>
+            <a href="/add">เพิ่มค่าใช้จ่าย</a>
+            <a href="/dashboard">แดชบอร์ด</a>
+        </nav>
+        <div class="user-info">
+            <span id="user-welcome"></span>
+            <button id="logout-btn" class="logout-btn">ออกจากระบบ</button>
+        </div>
+    </header>
+
+    <main class="profile-container">
+        <!-- User Stats Card -->
+        <div class="profile-stats">
+            <h3>📊 สถิติการใช้งาน</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-expenses">0</div>
+                    <div class="stat-label">รายการทั้งหมด</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="total-amount">฿0</div>
+                    <div class="stat-label">จำนวนเงินรวม</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="member-since">-</div>
+                    <div class="stat-label">สมาชิกตั้งแต่</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Info Card -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">👤</div>
+                <h2 class="profile-title">ข้อมูลส่วนตัว</h2>
+            </div>
+
+            <form id="profile-form" class="profile-form">
+                <div class="form-group">
+                    <label for="username">ชื่อผู้ใช้</label>
+                    <input type="text" id="username" name="username" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">อีเมล</label>
+                    <input type="email" id="email" name="email" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="created-at">วันที่สมัครสมาชิก</label>
+                    <input type="text" id="created-at" class="form-input" disabled>
+                </div>
+
+                <div class="profile-actions">
+                    <button type="submit" id="update-profile-btn" class="btn btn-primary">
+                        💾 อัปเดตข้อมูล
+                    </button>
+                </div>
+            </form>
+
+            <!-- Change Password Section -->
+            <div class="password-section">
+                <h3>🔐 เปลี่ยนรหัสผ่าน</h3>
+                <form id="password-form" class="profile-form">
+                    <div class="form-group">
+                        <label for="current-password">รหัสผ่านปัจจุบัน</label>
+                        <input type="password" id="current-password" name="currentPassword" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new-password">รหัสผ่านใหม่</label>
+                        <input type="password" id="new-password" name="newPassword" class="form-input" required minlength="6">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-password">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" id="confirm-password" name="confirmPassword" class="form-input" required minlength="6">
+                    </div>
+
+                    <div class="profile-actions">
+                        <button type="submit" id="change-password-btn" class="btn btn-secondary">
+                            🔑 เปลี่ยนรหัสผ่าน
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="danger-zone">
+                <h3>⚠️ Danger Zone</h3>
+                <p>การดำเนินการในส่วนนี้ไม่สามารถย้อนกลับได้</p>
+                <button id="logout-account-btn" class="btn btn-danger">
+                    🚪 ออกจากระบบ
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserProfile();
+            loadUserStats();
+            initializeAuth();
+            initializeForms();
+        });
+
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('/api/auth/me');
+                if (!response.ok) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+                if (data && data.user) {
+                    const user = data.user;
+                    
+                    // Fill form fields
+                    document.getElementById('username').value = user.username;
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('user-welcome').textContent = `สวัสดี, ${user.username}`;
+                    
+                    // Format created date
+                    if (user.created_at) {
+                        const createdDate = new Date(user.created_at);
+                        document.getElementById('created-at').value = createdDate.toLocaleDateString('th-TH');
+                        document.getElementById('member-since').textContent = createdDate.getFullYear() + 543; // Thai year
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadUserStats() {
+            try {
+                const response = await fetch('/api/expenses');
+                if (response.ok) {
+                    const data = await response.json();
+                    const expenses = data.data || [];
+                    
+                    // Calculate stats
+                    const totalExpenses = expenses.length;
+                    const totalAmount = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount || 0), 0);
+                    
+                    // Update stats display
+                    document.getElementById('total-expenses').textContent = totalExpenses.toLocaleString();
+                    document.getElementById('total-amount').textContent = `฿${totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function initializeAuth() {
+            const logoutBtns = document.querySelectorAll('#logout-btn, #logout-account-btn');
+            logoutBtns.forEach(btn => {
+                btn.addEventListener('click', logout);
+            });
+        }
+
+        function initializeForms() {
+            // Profile update form
+            const profileForm = document.getElementById('profile-form');
+            profileForm.addEventListener('submit', handleProfileUpdate);
+
+            // Password change form
+            const passwordForm = document.getElementById('password-form');
+            passwordForm.addEventListener('submit', handlePasswordChange);
+        }
+
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const profileData = {
+                username: formData.get('username'),
+                email: formData.get('email')
+            };
+
+            const updateBtn = document.getElementById('update-profile-btn');
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'กำลังอัปเดต...';
+
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        title: 'อัปเดตสำเร็จ! ✅',
+                        text: 'ข้อมูลส่วนตัวได้รับการอัปเดตแล้ว',
+                        icon: 'success',
+                        confirmButtonColor: '#ff7300'
+                    });
+                    
+                    // Update welcome message
+                    document.getElementById('user-welcome').textContent = `สวัสดี, ${profileData.username}`;
+                } else {
+                    throw new Error(result.error || 'เกิดข้อผิดพลาดในการอัปเดต');
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: 'เกิดข้อผิดพลาด! ❌',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#ff7300'
+                });
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = '💾 อัปเดตข้อมูล';
+            }
+        }
+
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const currentPassword = formData.get('currentPassword');
+            const newPassword = formData.get('newPassword');
+            const confirmPassword = formData.get('confirmPassword');
+
+            if (newPassword !== confirmPassword) {
+                Swal.fire({
+                    title: 'รหัสผ่านไม่ตรงกัน! ❌',
+                    text: 'กรุณายืนยันรหัสผ่านให้ถูกต้อง',
+                    icon: 'error',
+                    confirmButtonColor: '#ff7300'
+                });
+                return;
+            }
+
+            const changeBtn = document.getElementById('change-password-btn');
+            changeBtn.disabled = true;
+            changeBtn.textContent = 'กำลังเปลี่ยน...';
+
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    Swal.fire({
+                        title: 'เปลี่ยนรหัสผ่านสำเร็จ! 🔑',
+                        text: 'รหัสผ่านของคุณได้รับการอัปเดตแล้ว',
+                        icon: 'success',
+                        confirmButtonColor: '#ff7300'
+                    });
+                    
+                    // Clear password form
+                    document.getElementById('password-form').reset();
+                } else {
+                    throw new Error(result.error || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: 'เกิดข้อผิดพลาด! ❌',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#ff7300'
+                });
+            } finally {
+                changeBtn.disabled = false;
+                changeBtn.textContent = '🔑 เปลี่ยนรหัสผ่าน';
+            }
+        }
+
+        function logout() {
+            Swal.fire({
+                title: 'ออกจากระบบ?',
+                text: 'คุณต้องการออกจากระบบหรือไม่?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#ff7300',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'ออกจากระบบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/api/auth/logout', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.fire({
+                            title: 'ออกจากระบบแล้ว! 👋',
+                            text: 'ขอบคุณที่ใช้บริการ',
+                            icon: 'success',
+                            confirmButtonColor: '#ff7300',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 1500);
+                    })
+                    .catch(error => {
+                        console.error('Logout error:', error);
+                        window.location.href = '/login';
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

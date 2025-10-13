@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Expense</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <header>
@@ -13,7 +14,12 @@
             <a href="/">หน้าแรก</a>
             <a href="/add">เพิ่มค่าใช้จ่าย</a>
             <a href="/dashboard">แดชบอร์ด</a>
+            <a href="/profile">ข้อมูลส่วนตัว</a>
         </nav>
+        <div class="user-info">
+            <span id="user-welcome"></span>
+            <button id="logout-btn" class="logout-btn">ออกจากระบบ</button>
+        </div>
     </header>
     <main>
         <form id="add-expense-form">
@@ -82,5 +88,53 @@
         <div id="ocr-result"></div>
     </main>
     <script src="/js/add.js"></script>
+    <script>
+        // Add authentication check and logout functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            initializeAuth();
+        });
+
+        function checkAuthStatus() {
+            fetch('/api/auth/me')
+                .then(response => {
+                    if (!response.ok) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.user) {
+                        document.getElementById('user-welcome').textContent = `สวัสดี, ${data.user.username}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Auth check error:', error);
+                    window.location.href = '/login';
+                });
+        }
+
+        function initializeAuth() {
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+        }
+
+        function logout() {
+            fetch('/api/auth/logout', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = '/login';
+            })
+            .catch(error => {
+                console.error('Logout error:', error);
+                window.location.href = '/login';
+            });
+        }
+    </script>
 </body>
 </html>

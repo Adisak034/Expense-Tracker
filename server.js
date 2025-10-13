@@ -1,9 +1,11 @@
 const express = require('express');
+const session = require('express-session');
 const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 const db = require('./database.js');
+const auth = require('./auth.js');
 const path = require('path');
 
 const app = express();
@@ -11,6 +13,18 @@ const port = 3000;
 
 // Store SSE connections
 let sseClients = [];
+
+// Session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'your-secret-key-here',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // Set to true if using HTTPS
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
 
 // Middleware
 app.use(express.json());
@@ -36,106 +50,281 @@ const upload = multer({
 // IMPORTANT: Replace with your actual n8n webhook URL
 const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/upload-webhook';
 
-// --- API Routes ---
+// --- Authentication Routes ---
 
-// Get all expenses
-app.get('/api/expenses', (req, res) => {
-    const sql = "select * from expenses ORDER BY expense_date DESC";
-    const params = [];
-    db.all(sql, params, (err, rows) => {
-        if (err) {
-          res.status(400).json({"error":err.message});
-          return;
-        }
-        res.json({
-            "message":"success",
-            "data":rows
-        });
-      });
-});
-
-// Get single expense by ID
-app.get('/api/expenses/:id', (req, res) => {
-    const id = req.params.id;
-    const sql = 'SELECT * FROM expenses WHERE id = ?';
-    
-    console.log(`[API] GET /api/expenses/${id} - Fetching single expense`);
-    
-    db.get(sql, [id], (err, row) => {
-        if (err) {
-            console.error(`[ERROR] Database error for expense ID ${id}:`, err.message);
-            res.status(400).json({"error": err.message});
-            return;
+// Register new user
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, email, password, confirmPassword } = req.body;
+        
+        // Validation
+        if (!username || !email || !password || !confirmPassword) {
+            return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
         }
         
-        if (!row) {
+        if (password !== confirmPassword) {
+            return res.status(400).json({ error: 'รหัสผ่านไม่ตรงกัน' });
+        }
+        
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
+        }
+        
+        // Register user
+        const userId = await auth.registerUser(username, email, password);
+        
+        res.json({
+            message: 'สมัครสมาชิกสำเร็จ',
+            userId: userId
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Login user
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { username, usernameOrEmail, password } = req.body;
+        const loginUsername = username || usernameOrEmail;
+        
+        if (!loginUsername || !password) {
+            return res.status(400).json({ error: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' });
+        }
+        
+        const user = await auth.loginUser(loginUsername, password);
+        
+        // Set session
+        req.session.userId = user.id;
+        req.session.username = user.username;
+        
+        res.json({
+            message: 'เข้าสู่ระบบสำเร็จ',
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Logout user
+app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการออกจากระบบ' });
+        }
+        res.clearCookie('connect.sid');
+        res.json({ message: 'ออกจากระบบสำเร็จ' });
+    });
+});
+
+// Get current user info
+app.get('/api/auth/me', auth.requireAuth, async (req, res) => {
+    try {
+        const user = await auth.getUserById(req.session.userId);
+        res.json({
+            message: 'success',
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                created_at: user.created_at
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้' });
+    }
+});
+
+// Update user profile
+app.put('/api/auth/profile', auth.requireAuth, async (req, res) => {
+    try {
+        const { username, email } = req.body;
+        
+        if (!username || !email) {
+            return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+        }
+        
+        // Check if username or email already exists (exclude current user)
+        const [existingUser] = await db.execute(
+            'SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?',
+            [username, email, req.session.userId]
+        );
+        
+        if (existingUser.length > 0) {
+            return res.status(400).json({ error: 'ชื่อผู้ใช้หรืออีเมลนี้มีอยู่แล้ว' });
+        }
+        
+        // Update user profile
+        await db.execute(
+            'UPDATE users SET username = ?, email = ? WHERE id = ?',
+            [username, email, req.session.userId]
+        );
+        
+        // Update session username
+        req.session.username = username;
+        
+        res.json({
+            message: 'อัปเดตข้อมูลสำเร็จ',
+            user: { username, email }
+        });
+    } catch (error) {
+        console.error('Profile update error:', error);
+        res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล' });
+    }
+});
+
+// Change password
+app.put('/api/auth/change-password', auth.requireAuth, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'กรุณากรอกรหัสผ่านให้ครบถ้วน' });
+        }
+        
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร' });
+        }
+        
+        // Get current user with password hash
+        const [users] = await db.execute(
+            'SELECT password_hash FROM users WHERE id = ?',
+            [req.session.userId]
+        );
+        
+        if (users.length === 0) {
+            return res.status(404).json({ error: 'ไม่พบผู้ใช้' });
+        }
+        
+        const user = users[0];
+        
+        // Verify current password
+        const bcrypt = require('bcrypt');
+        const passwordMatch = await bcrypt.compare(currentPassword, user.password_hash);
+        
+        if (!passwordMatch) {
+            return res.status(400).json({ error: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' });
+        }
+        
+        // Hash new password
+        const saltRounds = 12;
+        const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+        
+        // Update password
+        await db.execute(
+            'UPDATE users SET password_hash = ? WHERE id = ?',
+            [newPasswordHash, req.session.userId]
+        );
+        
+        res.json({
+            message: 'เปลี่ยนรหัสผ่านสำเร็จ'
+        });
+    } catch (error) {
+        console.error('Password change error:', error);
+        res.status(500).json({ error: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน' });
+    }
+});
+
+// --- API Routes ---
+
+// Get all expenses (protected route)
+app.get('/api/expenses', auth.requireAuth, async (req, res) => {
+    try {
+        const sql = "SELECT * FROM expenses WHERE user_id = ? ORDER BY expense_date DESC";
+        const [rows] = await db.execute(sql, [req.session.userId]);
+        
+        res.json({
+            "message": "success",
+            "data": rows
+        });
+    } catch (err) {
+        res.status(400).json({"error": err.message});
+    }
+});
+
+// Get single expense by ID (protected route)
+app.get('/api/expenses/:id', auth.requireAuth, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const sql = 'SELECT * FROM expenses WHERE id = ? AND user_id = ?';
+        
+        console.log(`[API] GET /api/expenses/${id} - Fetching single expense`);
+        
+        const [rows] = await db.execute(sql, [id, req.session.userId]);
+        
+        if (rows.length === 0) {
             console.log(`[INFO] Expense with ID ${id} not found`);
             res.status(404).json({"error": "Expense not found"});
             return;
         }
         
+        const row = rows[0];
         console.log(`[SUCCESS] Found expense:`, row);
         res.json({
             "message": "success",
             "data": row
         });
-    });
+    } catch (err) {
+        console.error(`[ERROR] Database error for expense ID ${req.params.id}:`, err.message);
+        res.status(400).json({"error": err.message});
+    }
 });
 
-// Add a new expense
-app.post('/api/expenses', (req, res) => {
-    const { item, amount, expense_date, category } = req.body;
-    if (!item || !amount || !expense_date || !category) {
-        res.status(400).json({"error": "Please provide item, amount, expense_date, and category."});
-        return;
-    }
-    const sql = 'INSERT INTO expenses (item, amount, expense_date, category) VALUES (?,?,?,?)';
-    const params = [item, amount, expense_date, category];
-    db.run(sql, params, function (err, result) {
-        if (err){
-            res.status(400).json({"error": err.message})
+// Add a new expense (protected route)
+app.post('/api/expenses', auth.requireAuth, async (req, res) => {
+    try {
+        const { item, amount, expense_date, category } = req.body;
+        if (!item || !amount || !expense_date || !category) {
+            res.status(400).json({"error": "Please provide item, amount, expense_date, and category."});
             return;
         }
+        
+        const sql = 'INSERT INTO expenses (item, amount, expense_date, category, user_id) VALUES (?,?,?,?,?)';
+        const [result] = await db.execute(sql, [item, amount, expense_date, category, req.session.userId]);
+        
         res.json({
             "message": "success",
-            "data": { item, amount, expense_date, category },
-            "id" : this.lastID
-        })
-    });
+            "data": { item, amount, expense_date, category, user_id: req.session.userId },
+            "id": result.insertId
+        });
+    } catch (err) {
+        res.status(400).json({"error": err.message});
+    }
 });
 
-// Update an expense
-app.put('/api/expenses/:id', (req, res) => {
-    const { item, amount, expense_date, category } = req.body;
-    const expenseId = req.params.id;
-    
-    console.log('PUT /api/expenses/:id received:');
-    console.log('Expense ID:', expenseId);
-    console.log('Request body:', req.body);
-    
-    if (!item || !amount || !expense_date || !category) {
-        console.log('Missing required fields');
-        res.status(400).json({"error": "Please provide item, amount, expense_date, and category."});
-        return;
-    }
-    
-    const sql = 'UPDATE expenses SET item = ?, amount = ?, expense_date = ?, category = ? WHERE id = ?';
-    const params = [item, amount, expense_date, category, expenseId];
-    
-    console.log('Executing SQL:', sql);
-    console.log('With params:', params);
-    
-    db.run(sql, params, function (err) {
-        if (err) {
-            console.error('Database error:', err);
-            res.status(400).json({"error": err.message});
+// Update an expense (protected route)
+app.put('/api/expenses/:id', auth.requireAuth, async (req, res) => {
+    try {
+        const { item, amount, expense_date, category } = req.body;
+        const expenseId = req.params.id;
+        
+        console.log('PUT /api/expenses/:id received:');
+        console.log('Expense ID:', expenseId);
+        console.log('Request body:', req.body);
+        
+        if (!item || !amount || !expense_date || !category) {
+            console.log('Missing required fields');
+            res.status(400).json({"error": "Please provide item, amount, expense_date, and category."});
             return;
         }
         
-        console.log('Changes made:', this.changes);
+        const sql = 'UPDATE expenses SET item = ?, amount = ?, expense_date = ?, category = ? WHERE id = ? AND user_id = ?';
         
-        if (this.changes === 0) {
-            console.log('No records updated - expense not found');
+        console.log('Executing SQL:', sql);
+        
+        const [result] = await db.execute(sql, [item, amount, expense_date, category, expenseId, req.session.userId]);
+        
+        console.log('Changes made:', result.affectedRows);
+        
+        if (result.affectedRows === 0) {
+            console.log('No records updated - expense not found or not owned by user');
             res.status(404).json({"error": "Expense not found"});
             return;
         }
@@ -144,35 +333,32 @@ app.put('/api/expenses/:id', (req, res) => {
         res.json({
             "message": "success",
             "data": { id: expenseId, item, amount, expense_date, category },
-            "changes": this.changes
+            "changes": result.affectedRows
         });
-    });
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(400).json({"error": err.message});
+    }
 });
 
-// Delete an expense
-app.delete('/api/expenses/:id', (req, res) => {
-    const expenseId = req.params.id;
-    
-    console.log('DELETE /api/expenses/:id received:');
-    console.log('Expense ID:', expenseId);
-    
-    const sql = 'DELETE FROM expenses WHERE id = ?';
-    const params = [expenseId];
-    
-    console.log('Executing SQL:', sql);
-    console.log('With params:', params);
-    
-    db.run(sql, params, function (err) {
-        if (err) {
-            console.error('Database error:', err);
-            res.status(400).json({"error": err.message});
-            return;
-        }
+// Delete an expense (protected route)
+app.delete('/api/expenses/:id', auth.requireAuth, async (req, res) => {
+    try {
+        const expenseId = req.params.id;
         
-        console.log('Changes made:', this.changes);
+        console.log('DELETE /api/expenses/:id received:');
+        console.log('Expense ID:', expenseId);
         
-        if (this.changes === 0) {
-            console.log('No records deleted - expense not found');
+        const sql = 'DELETE FROM expenses WHERE id = ? AND user_id = ?';
+        
+        console.log('Executing SQL:', sql);
+        
+        const [result] = await db.execute(sql, [expenseId, req.session.userId]);
+        
+        console.log('Changes made:', result.affectedRows);
+        
+        if (result.affectedRows === 0) {
+            console.log('No records deleted - expense not found or not owned by user');
             res.status(404).json({"error": "Expense not found"});
             return;
         }
@@ -180,9 +366,12 @@ app.delete('/api/expenses/:id', (req, res) => {
         console.log('Delete successful');
         res.json({
             "message": "success",
-            "changes": this.changes
+            "changes": result.affectedRows
         });
-    });
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(400).json({"error": err.message});
+    }
 });
 
 // SSE endpoint for real-time updates
@@ -304,13 +493,43 @@ app.post('/api/ocr/upload', upload.single('ocrFile'), async (req, res) => {
 
 // --- Serve Frontend Files ---
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    if (req.session.userId) {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    }
 });
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
 app.get('/add', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'add.html'));
+    if (req.session.userId) {
+        res.sendFile(path.join(__dirname, 'public', 'add.html'));
+    } else {
+        res.redirect('/login');
+    }
 });
+
 app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+    if (req.session.userId) {
+        res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+    } else {
+        res.redirect('/login');
+    }
+});
+
+app.get('/profile', (req, res) => {
+    if (req.session.userId) {
+        res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+    } else {
+        res.redirect('/login');
+    }
 });
 
 

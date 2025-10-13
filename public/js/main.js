@@ -1,10 +1,54 @@
 // Simple main.js for expense list with detail navigation
 document.addEventListener('DOMContentLoaded', function() {
+    checkAuthStatus();
     loadExpenses();
     initializeFilters();
+    initializeAuth();
 });
 
 let currentExpenses = [];
+
+// Authentication functions
+function checkAuthStatus() {
+    fetch('/api/auth/me')
+        .then(response => {
+            if (!response.ok) {
+                window.location.href = '/login';
+                return;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.user) {
+                document.getElementById('user-welcome').textContent = `สวัสดี, ${data.user.username}`;
+            }
+        })
+        .catch(error => {
+            console.error('Auth check error:', error);
+            window.location.href = '/login';
+        });
+}
+
+function initializeAuth() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
+}
+
+function logout() {
+    fetch('/api/auth/logout', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        window.location.href = '/login';
+    })
+    .catch(error => {
+        console.error('Logout error:', error);
+        window.location.href = '/login';
+    });
+}
 
 // Load expenses from API
 function loadExpenses() {
@@ -13,6 +57,10 @@ function loadExpenses() {
     return fetch('/api/expenses')
         .then(response => {
             if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
@@ -253,7 +301,14 @@ function updateExpense(event, id) {
     })
     .then(data => {
         console.log('Expense updated:', data);
-        showToast('แก้ไขรายการเรียบร้อยแล้ว', 'success');
+        Swal.fire({
+            title: 'แก้ไขสำเร็จ! ✅',
+            text: 'แก้ไขรายการเรียบร้อยแล้ว',
+            icon: 'success',
+            confirmButtonColor: '#ff7300',
+            timer: 1500,
+            showConfirmButton: false
+        });
         // Refresh the expense data and show updated detail
         loadExpenses().then(() => {
             showExpenseDetail(id);
@@ -261,31 +316,61 @@ function updateExpense(event, id) {
     })
     .catch(error => {
         console.error('Error updating expense:', error);
-        showToast('เกิดข้อผิดพลาดในการแก้ไข', 'error');
+        Swal.fire({
+            title: 'เกิดข้อผิดพลาด! ❌',
+            text: 'ไม่สามารถแก้ไขรายการได้',
+            icon: 'error',
+            confirmButtonColor: '#ff7300'
+        });
     });
 }
 
 // Delete expense function
 function deleteExpense(id) {
     const expense = currentExpenses.find(e => e.id === id);
-    if (expense && confirm(`คุณต้องการลบรายการ "${expense.item}" หรือไม่?`)) {
-        fetch(`/api/expenses/${id}`, {
-            method: 'DELETE'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+    if (expense) {
+        Swal.fire({
+            title: 'ยืนยันการลบ',
+            text: `คุณต้องการลบรายการ "${expense.item}" หรือไม่?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#ff7300',
+            confirmButtonText: 'ลบ',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/expenses/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Expense deleted:', data);
+                    Swal.fire({
+                        title: 'ลบสำเร็จ! 🗑️',
+                        text: 'ลบรายการเรียบร้อยแล้ว',
+                        icon: 'success',
+                        confirmButtonColor: '#ff7300',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    loadExpenses(); // Go back to main list
+                })
+                .catch(error => {
+                    console.error('Error deleting expense:', error);
+                    Swal.fire({
+                        title: 'เกิดข้อผิดพลาด! ❌',
+                        text: 'ไม่สามารถลบรายการได้',
+                        icon: 'error',
+                        confirmButtonColor: '#ff7300'
+                    });
+                });
             }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Expense deleted:', data);
-            showToast('ลบรายการเรียบร้อยแล้ว', 'success');
-            loadExpenses(); // Go back to main list
-        })
-        .catch(error => {
-            console.error('Error deleting expense:', error);
-            showToast('เกิดข้อผิดพลาดในการลบรายการ', 'error');
         });
     }
 }
