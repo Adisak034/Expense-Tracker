@@ -1,27 +1,39 @@
 document.addEventListener('DOMContentLoaded', function() {
     // This function will be called by the auth check at the bottom of add.html
     window.initializeApp = function() {
-        // Initialize SSE connection for real-time OCR updates
-        // NOTE: This is no longer the primary method for receiving OCR results, but we keep it for now.
-        // The SSE connection is no longer needed for the primary OCR flow.
-        // We can remove it to simplify the code.
-        const eventSource = new EventSource('/api/sse/ocr-updates'); // Kept for now for other potential features
-        eventSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            console.log('Received SSE data:', data);
-            if (data.type === 'ocr-result') {
-                Swal.close(); // Close loading alert
-                handleOCRResult(data.data);
-            } else if (data.type === 'connected') {
-                // This confirms the SSE connection is established on the server.
-                // It's a good place to enable UI elements if they were disabled.
-                console.log('[SSE] Connection established with server.');
+        let eventSource;
+
+        function connectSSE() {
+            // Close any existing connection
+            if (eventSource) {
+                eventSource.close();
             }
-        };
-        
-        eventSource.onerror = function(error) {
-            console.error('SSE Error:', error);
-        };
+
+            console.log('[SSE] Attempting to connect...');
+            eventSource = new EventSource('/api/sse/ocr-updates');
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('Received SSE data:', data);
+                if (data.type === 'ocr-result') {
+                    Swal.close(); // Close loading alert
+                    handleOCRResult(data.data);
+                } else if (data.type === 'connected') {
+                    console.log('[SSE] Connection established with server.');
+                }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('SSE Error:', error);
+                eventSource.close();
+                // Attempt to reconnect after a delay (e.g., 5 seconds)
+                console.log('[SSE] Connection lost. Reconnecting in 5 seconds...');
+                setTimeout(connectSSE, 5000);
+            };
+        }
+
+        // Initial connection
+        connectSSE();
     }
 
     const addExpenseForm = document.getElementById('add-expense-form');

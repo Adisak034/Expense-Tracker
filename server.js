@@ -425,6 +425,12 @@ app.get('/api/sse/ocr-updates', auth.requireAuth, (req, res) => {
         'Connection': 'keep-alive',
     });
 
+    // Clean up any stale connections for this user before adding a new one
+    sseClients = sseClients.filter(client => {
+        const isStale = client.userId === req.session.userId;
+        if (isStale) console.log(`[SSE] Removing stale connection for user ${req.session.userId}`);
+        return !isStale;
+    });
     // Add client to the list
     const clientId = Date.now();
     const newClient = {
@@ -451,17 +457,21 @@ function sendOCRResultToUser(userId, ocrData) {
         type: 'ocr-result',
         data: ocrData
     });
-
-    // Compare userId as numbers to avoid type mismatch (e.g., 123 vs "123")
-    const client = sseClients.find(c => Number(c.userId) === Number(userId));
-
-    if (client) {
-        try {
-            client.response.write(`data: ${message}\n\n`);
-            console.log(`[SSE] Sent OCR result to user ${userId}`);
-        } catch (error) {
-            console.error(`Error sending SSE message to user ${userId}:`, error);
-        }
+    
+    // Find all active clients for this user (supports multiple tabs)
+    const clientsForUser = sseClients.filter(c => Number(c.userId) === Number(userId));
+    
+    if (clientsForUser.length > 0) {
+        console.log(`[SSE] Found ${clientsForUser.length} client(s) for user ${userId}. Broadcasting...`);
+        clientsForUser.forEach(client => {
+            try {
+                client.response.write(`data: ${message}\n\n`);
+            } catch (error) {
+                console.error(`[SSE] Error sending message to client ${client.id} for user ${userId}:`, error);
+            }
+        });
+    } else {
+        console.log(`[SSE] No active clients found for user ${userId}.`);
     }
 }
 
