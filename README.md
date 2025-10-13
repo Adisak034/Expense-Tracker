@@ -29,8 +29,9 @@ A modern, full-featured expense tracking application built with Node.js, Express
 
 ### 🔍 OCR Integration
 - **Receipt Processing** - Upload receipts for automatic data extraction
-- **External Service Integration** - Configurable OCR service endpoints
+- **n8n Workflow** - Uses a powerful n8n workflow to process images, call an external OCR API, and send structured data back to the application. (See [n8n Workflow Setup](#-n8n-workflow-for-ocr))
 - **Automatic Cleanup** - Temporary files are automatically removed
+- **Real-time Updates** - Uses Server-Sent Events (SSE) to notify the user when OCR processing is complete.
 
 ## 🚀 Quick Start
 
@@ -77,6 +78,46 @@ A modern, full-featured expense tracking application built with Node.js, Express
 6. **Access the Application**
    - Open your browser and go to: `http://localhost:3000`
    - Register a new account or login with existing credentials
+
+## ⚙️ n8n Workflow Setup
+
+This project uses n8n to handle the OCR (Optical Character Recognition) process. The Node.js server uploads a receipt image to an n8n webhook, which then processes the image and sends the extracted data back.
+
+### 1. Set up n8n
+
+The easiest way to run n8n is with Docker:
+```bash
+docker run -it --rm --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
+```
+Access n8n at `http://localhost:5678`.
+
+### 2. Import the Workflow
+
+1.  Go to your n8n canvas.
+2.  Click on `Workflows` in the left sidebar.
+3.  Click `Import from File` and select the `n8n_workflow/Expense-Tracker-Workflow.json` file from this project.
+
+### 3. Configure and Activate
+
+1.  **Get Webhook URL**: After importing, open the "Webhook1" node. You will see a **Test URL** and a **Production URL**. Copy the **Production URL**. It will look something like `http://localhost:5678/webhook/upload-webhook`.
+2.  **Update Server Config**: Paste this URL into your `.env` file for the `N8N_WEBHOOK_URL` variable. Alternatively, you can update it directly in `server.js`.
+    ```javascript
+    // in server.js
+    const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/upload-webhook';
+    ```
+3.  **Check OCR API Key**: The "iApp Recipt OCR" node uses a `demo` API key. For production use, you should replace this with your own key from the OCR provider.
+4.  **Verify Callback URL**: The "ส่งข้อมูล" (Send Data) node in the workflow is configured to send results back to `http://localhost:3000/api/webhook/ocr-result`. If your Expense Tracker app is running on a different address or port, you **must** update the URL in that node.
+5.  **Activate Workflow**: Activate the workflow by toggling the `Active` switch at the top right of the n8n canvas. Your OCR processing is now ready!
+
+### Workflow Explained
+
+The imported workflow (`Expense-Tracker-Workflow.json`) performs the following steps:
+1.  **Webhook1**: Receives the image file and `userId` from the Node.js application.
+2.  **Extract from File1 / Convert to File1**: Prepares the file for the OCR API.
+3.  **iApp Recipt OCR**: Sends the image to the `iapp.co.th` OCR service for processing.
+4.  **If**: Checks if the OCR process was successful.
+5.  **ส่งข้อมูล (Send Data)**: If successful, it sends the extracted `Items`, `Amount`, and `Date` along with the original `userId` back to the Node.js application's webhook (`/api/webhook/ocr-result`).
+6.  **ส่งข้อผิดพลาด (Send Error)**: If it fails, it sends an error message.
 
 ## 🗄️ Database Management
 
@@ -201,6 +242,8 @@ expense-tracker/
 │   │   └── style.css      # Main stylesheet
 │   └── js/
 │       ├── main.js        # Common JavaScript
+├── n8n_workflow/
+│   └── Expense-Tracker-Workflow.json # n8n workflow for OCR
 └── uploads/               # Temporary OCR file storage
 ```
 
