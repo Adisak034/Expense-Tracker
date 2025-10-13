@@ -26,7 +26,6 @@ A modern, full-featured expense tracking application built with Node.js, Express
 - **Responsive Design** - Mobile-first approach with bottom navigation
 - **SweetAlert2 Integration** - Beautiful notifications and confirmations
 - **Clean Interface** - Modern, intuitive user interface
-- **Dark Theme Support** - Easy on the eyes design
 
 ### 🔍 OCR Integration
 - **Receipt Processing** - Upload receipts for automatic data extraction
