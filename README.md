@@ -183,7 +183,7 @@ Content-Type: application/json
 ```
 expense-tracker/
 ├── server.js              # Main application entry point
-├── database.js            # MySQL connection and setup
+├── database.js            # MySQL connection setup
 ├── auth.js                 # Authentication middleware
 ├── package.json            # Dependencies and scripts
 ├── .env                    # Environment configuration
@@ -202,8 +202,6 @@ expense-tracker/
 │   │   └── style.css      # Main stylesheet
 │   └── js/
 │       ├── main.js        # Common JavaScript
-│       ├── add.js         # Add expense functionality
-│       └── dashboard.js   # Dashboard functionality
 └── uploads/               # Temporary OCR file storage
 ```
 
@@ -265,30 +263,6 @@ expense-tracker/
    pm2 startup
    pm2 save
    ```
-
-## 📊 Features Roadmap
-
-- [ ] Export expenses to CSV/Excel
-- [ ] Expense categories management
-- [ ] Budget tracking and alerts
-- [ ] Recurring expenses
-- [ ] Multi-currency support
-- [ ] Expense reports and analytics
-- [ ] Mobile app (React Native)
-- [ ] API rate limiting
-- [ ] Two-factor authentication
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 
