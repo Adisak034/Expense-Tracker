@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // This function will be called by the auth check at the bottom of add.html
     window.initializeApp = function() {
         // Initialize SSE connection for real-time OCR updates
+        // NOTE: This is no longer the primary method for receiving OCR results, but we keep it for now.
         const eventSource = new EventSource('/api/sse/ocr-updates');
         
         eventSource.onmessage = function(event) {
@@ -10,6 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.type === 'ocr-result') {
                 handleOCRResult(data.data);
+            } else if (data.type === 'connected') {
+                // This confirms the SSE connection is established on the server.
+                // It's a good place to enable UI elements if they were disabled.
+                console.log('[SSE] Connection established with server.');
             }
         };
         
@@ -121,6 +126,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeOptionModal() {
         optionModal.style.display = 'none';
         showSelectionStep(); // Reset to selection step
+        // Do not clear selectedFileUrl here, as we need it for the result display
+        // It will be cleared when a new scan is initiated or the page is left.
+        selectedFile = null;
+        // selectedFileUrl = null; // <-- REMOVED THIS LINE
     }
 
     // Back to selection
@@ -202,23 +211,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('ocrFile', selectedFile);
 
-        // Show loading in modal and close it
+        // Close the selection modal
         closeOptionModal();
-        ocrResultDiv.innerHTML = '<div class="loading-message">กำลังอัปโหลดและประมวลผล <span class="loading-dots">...</span></div>';
+
+        // Show a loading SweetAlert
+        Swal.fire({
+            title: 'กำลังอัปโหลดและประมวลผล',
+            text: 'กรุณารอสักครู่ ระบบกำลังสแกนข้อมูลจากรูปภาพ...',
+            icon: 'info',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
         fetch('/api/ocr/upload', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            // Image uploaded successfully, now waiting for n8n webhook via SSE
-            // Keep showing loading message until webhook arrives
-            console.log('Image uploaded, waiting for n8n webhook...');
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Server error') });
+            }
+            return response.json();
+        })
+        .then(result => {
+            Swal.close(); // Close the loading alert on success
+            console.log('Received OCR result directly from server:', result);
+            if (result && result.type === 'ocr-result') {
+                handleOCRResult(result.data);
+            } else {
+                throw new Error('Invalid data format received from server.');
+            }
         })
         .catch(error => {
             console.error('Error uploading file:', error);
-            ocrResultDiv.innerHTML = '<div class="error-message">เกิดข้อผิดพลาดในการอัปโหลดไฟล์</div>';
+            Swal.fire({
+                title: 'เกิดข้อผิดพลาด! ❌',
+                text: error.message || 'ไม่สามารถอัปโหลดหรือประมวลผลไฟล์ได้',
+                icon: 'error',
+                confirmButtonColor: '#ff7300'
+            });
         });
     }
 
@@ -228,6 +261,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Close modal if open
         closeOptionModal();
+
+        // Clear any previous loading/error messages
+        ocrResultDiv.innerHTML = '';
         
         if (ocrData) {
             let resultHtml = `
@@ -238,10 +274,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="ocr-result-content">
             `;
-
-            if (selectedFileUrl) {
-                resultHtml += `<div class="ocr-image-preview"><img src="${selectedFileUrl}" alt="Scanned image"></div>`;
-            }
 
             resultHtml += `<div class="ocr-data-list">`;
 
@@ -258,15 +290,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Auto-fill form fields with structured data
             autoFillFormFromOCR(ocrData);
-            
-            // Show success alert
-            Swal.fire({
-                title: 'สแกนสำเร็จ! 📄✨',
-                text: 'ระบบได้กรอกข้อมูลจากรูปภาพให้แล้ว กรุณาตรวจสอบความถูกต้อง',
-                icon: 'success',
-                confirmButtonText: 'ตกลง',
-                confirmButtonColor: '#ff7300'
-            });
         } else {
             ocrResultDiv.innerHTML = '<div class="error-message">ไม่สามารถแยกข้อความจากรูปภาพได้</div>';
             Swal.fire({

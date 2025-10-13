@@ -45,7 +45,7 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB file size limit
-});
+}); 
 
 // IMPORTANT: Replace with your actual n8n webhook URL
 const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/upload-webhook';
@@ -416,6 +416,7 @@ app.delete('/api/expenses/:id', auth.requireAuth, async (req, res) => {
 });
 
 // SSE endpoint for real-time updates
+// NOTE: This is now less critical for OCR but can be kept for other real-time features.
 app.get('/api/sse/ocr-updates', auth.requireAuth, (req, res) => {
     // Set headers for SSE
     res.writeHead(200, {
@@ -444,6 +445,7 @@ app.get('/api/sse/ocr-updates', auth.requireAuth, (req, res) => {
 });
 
 // Function to broadcast OCR results to all connected clients
+// NOTE: This function is no longer used by the primary OCR flow but is kept for potential future use.
 function sendOCRResultToUser(userId, ocrData) {
     const message = JSON.stringify({
         type: 'ocr-result',
@@ -464,6 +466,7 @@ function sendOCRResultToUser(userId, ocrData) {
 }
 
 // Webhook endpoint to receive OCR results from n8n
+// NOTE: This endpoint is no longer used by the primary OCR flow. The /api/ocr/upload endpoint now handles the response directly.
 app.post('/api/webhook/ocr-result', (req, res) => {
     console.log('Received OCR result from n8n:', req.body);
     
@@ -483,7 +486,7 @@ app.post('/api/webhook/ocr-result', (req, res) => {
 });
 
 // Upload image for OCR
-app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), async (req, res) => {
+app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), async (req, res) => { 
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
@@ -496,27 +499,37 @@ app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), async (r
         const form = new FormData();
         // IMPORTANT: n8n webhook must be configured to receive a file on the 'file' field
         form.append('file', fs.createReadStream(filePath));
-        // Pass the userId to n8n
+        // Pass the userId to n8n so it can be returned if needed, though we don't use it in this flow.
         form.append('userId', userId);
+        // Tell n8n to respond to this request directly instead of calling another webhook.
+        form.append('responseMode', 'direct');
 
         console.log(`Forwarding file to n8n webhook: ${N8N_WEBHOOK_URL}`);
 
         const response = await axios.post(N8N_WEBHOOK_URL, form, {
             headers: {
                 ...form.getHeaders()
-            }
+            },
+            timeout: 30000 // 30 seconds timeout
         });
 
-        console.log('n8n response status:', response.status);
-        console.log('n8n response data:', response.data);
+        console.log('Received direct response from n8n:', response.data);
 
         // Clean up the uploaded file
         fs.unlink(filePath, (err) => {
             if (err) console.error("Error deleting temp file:", err);
         });
 
-        // Assuming n8n returns a JSON response with the extracted text
-        res.json(response.data);
+        // Send the OCR data received from n8n directly back to the client.
+        // Ensure that response.data is not empty
+        if (!response.data || Object.keys(response.data).length === 0) {
+            console.warn('n8n returned an empty response. Sending error to client.');
+            return res.status(500).json({ error: 'OCR service returned no data.' });
+        }
+        res.json({
+            type: 'ocr-result',
+            data: response.data
+        });
 
     } catch (error) {
         console.error('--- ERROR SENDING FILE TO N8N ---');
@@ -528,7 +541,7 @@ app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), async (r
             console.error('Headers:', error.response.headers);
         } else if (error.request) {
             // The request was made but no response was received
-            console.error('Request:', error.request);
+            console.error('No response received from n8n. It might have timed out.', error.message);
         } else {
             // Something happened in setting up the request that triggered an Error
             console.error('Error Message:', error.message);

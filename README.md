@@ -1,181 +1,308 @@
-# Expense Tracker with PostgreSQL & Authentication
+# 💰 Expense Tracker
 
-## Overview
-This is a Node.js/Express application for managing expenses with OCR functionality. It now includes user authentication and uses PostgreSQL for data storage.
+A modern, full-featured expense tracking application built with Node.js, Express, and MySQL. Features user authentication, OCR receipt processing, and a beautiful responsive UI.
 
-## Features
-- 👤 User Registration & Login
-- 🔐 Session-based Authentication  
-- 💰 Personal Expense Management
-- 📷 OCR Image Scanning (with n8n integration)
-- 📊 Dashboard with Charts
-- 🔍 Advanced Filtering & Search
-- 📱 Mobile-friendly Interface
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-## Prerequisites
-- Node.js (v14 or higher)
-- MySQL (v8.0 or higher) or Docker
-- n8n (optional, for OCR functionality)
+## ✨ Features
 
-## Installation
+### 🔐 User Authentication
+- **Secure Registration & Login** - bcrypt password hashing with salt rounds
+- **Session Management** - Express-session for secure user sessions
+- **Protected Routes** - Middleware-based route protection
+- **Profile Management** - Complete user profile with statistics
 
-### 1. Clone and Setup
+### 💸 Expense Management
+- **Add Expenses** - Quick expense entry with categories
+- **View Dashboard** - Beautiful dashboard with expense overview
+- **Category Management** - Organize expenses by categories
+- **Date Filtering** - Filter expenses by date ranges
+- **User-specific Data** - Each user sees only their own expenses
+
+### 📱 Modern UI/UX
+- **Responsive Design** - Mobile-first approach with bottom navigation
+- **SweetAlert2 Integration** - Beautiful notifications and confirmations
+- **Clean Interface** - Modern, intuitive user interface
+- **Dark Theme Support** - Easy on the eyes design
+
+### 🔍 OCR Integration
+- **Receipt Processing** - Upload receipts for automatic data extraction
+- **External Service Integration** - Configurable OCR service endpoints
+- **Automatic Cleanup** - Temporary files are automatically removed
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Node.js** (v14 or higher)
+- **Docker** (for MySQL database)
+- **npm** package manager
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Adisak034/Expense-Tracker.git
+   cd Expense-Tracker
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up MySQL Database**
+   ```bash
+   docker run --name expense-mysql \
+     -e MYSQL_ROOT_PASSWORD=rootpassword \
+     -e MYSQL_DATABASE=expense_tracker \
+     -e MYSQL_USER=expense_user \
+     -e MYSQL_PASSWORD=mypassword \
+     -p 3306:3306 -d mysql:8.0
+   ```
+
+4. **Configure Environment**
+   ```bash
+   # Copy and edit environment file
+   cp .env.example .env
+   ```
+
+5. **Start the Application**
+   ```bash
+   npm start
+   ```
+
+6. **Access the Application**
+   - Open your browser and go to: `http://localhost:3000`
+   - Register a new account or login with existing credentials
+
+## 🗄️ Database Management
+
+### View Database with GUI
+
+**Option 1: phpMyAdmin (Recommended)**
 ```bash
-git clone <repository-url>
-cd Ocr-Node
-npm install
+docker run --name phpmyadmin -d --link expense-mysql:db -p 8080:80 phpmyadmin/phpmyadmin
 ```
+Access at: `http://localhost:8080`
+- Username: `expense_user`
+- Password: `mypassword`
 
-### 2. Database Setup
+**Option 2: MySQL Workbench**
+- Host: `localhost:3306`
+- Username: `expense_user`
+- Password: `mypassword`
+- Database: `expense_tracker`
 
-#### Option A: Using Docker (Recommended)
-```bash
-docker run --name expense-mysql -e MYSQL_ROOT_PASSWORD=mypassword -e MYSQL_DATABASE=expense_tracker -e MYSQL_USER=expense_user -e MYSQL_PASSWORD=mypassword -p 3306:3306 -d mysql:8.0
-```
+### Database Schema
 
-#### Option B: Local MySQL Installation
-Create a MySQL database:
-```sql
-CREATE DATABASE expense_tracker;
-CREATE USER 'expense_user'@'localhost' IDENTIFIED BY 'your_password';
-GRANT ALL PRIVILEGES ON expense_tracker.* TO 'expense_user'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-### 3. Environment Configuration
-Copy `.env.example` to `.env` and update the values:
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your database credentials:
-```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=expense_tracker
-DB_USER=expense_user
-DB_PASSWORD=mypassword
-SESSION_SECRET=your-very-secure-session-secret-key-here
-```
-
-### 4. Run the Application
-```bash
-node server.js
-```
-
-The application will:
-- Start on http://localhost:3000
-- Automatically create database tables if they don't exist
-- Redirect unauthenticated users to login page
-
-## Database Schema
-
-### Users Table
+**Users Table**
 ```sql
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-### Expenses Table
+**Expenses Table**
 ```sql
 CREATE TABLE expenses (
-    id SERIAL PRIMARY KEY,
-    item VARCHAR(255) NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    expense_date DATE NOT NULL,
-    category VARCHAR(50) NOT NULL,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  item TEXT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  expense_date DATE NOT NULL,
+  category VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 ```
 
-## API Endpoints
+## 🔧 API Documentation
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user  
-- `GET /api/auth/me` - Get current user info
+### Authentication Endpoints
 
-### Expenses (Protected Routes)
-- `GET /api/expenses` - Get user's expenses
-- `POST /api/expenses` - Add new expense
-- `GET /api/expenses/:id` - Get single expense
-- `PUT /api/expenses/:id` - Update expense
-- `DELETE /api/expenses/:id` - Delete expense
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/auth/register` | Register new user | ❌ |
+| POST | `/api/auth/login` | User login | ❌ |
+| POST | `/api/auth/logout` | User logout | ✅ |
+| PUT | `/api/auth/profile` | Update profile | ✅ |
+| PUT | `/api/auth/change-password` | Change password | ✅ |
 
-### OCR
-- `POST /api/ocr/upload` - Upload image for OCR processing
+### Expense Endpoints
 
-## Pages
-- `/` - Home page (redirects to login if not authenticated)
-- `/login` - Login page
-- `/register` - Registration page
-- `/add` - Add expense page (protected)
-- `/dashboard` - Dashboard with charts (protected)
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/expenses` | Get user expenses | ✅ |
+| POST | `/api/expenses` | Add new expense | ✅ |
+| PUT | `/api/expenses/:id` | Update expense | ✅ |
+| DELETE | `/api/expenses/:id` | Delete expense | ✅ |
 
-## OCR Integration (Optional)
-If you want to use OCR functionality:
+### OCR Endpoints
 
-1. Install and setup n8n
-2. Create a webhook workflow in n8n for OCR processing
-3. Update the `N8N_WEBHOOK_URL` in your `.env` file
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/ocr/upload` | Upload receipt for OCR | ✅ |
 
-## Security Features
-- Password hashing with bcrypt (12 salt rounds)
-- Session-based authentication
-- Protected routes with middleware
-- User data isolation (users can only access their own expenses)
+### Example Requests
 
-## Migration from SQLite
-If migrating from the previous SQLite version:
-1. Export your existing data from SQLite
-2. Set up PostgreSQL as described above
-3. Import your data to the new PostgreSQL database
-4. Update user associations for existing expenses
+**Register User**
+```javascript
+POST /api/auth/register
+Content-Type: application/json
 
-## Troubleshooting
-
-### Database Connection Issues
-- Ensure PostgreSQL is running
-- Check database credentials in `.env`
-- Verify database exists and user has permissions
-
-### Authentication Issues
-- Clear browser cookies/localStorage
-- Check session secret is set in `.env`
-- Verify user exists in database
-
-### OCR Not Working
-- Check n8n is running (if using OCR)
-- Verify webhook URL is correct
-- Check file upload permissions
-
-## File Structure
-```
-├── server.js          # Main server file
-├── database.js        # PostgreSQL connection setup
-├── auth.js           # Authentication functions
-├── package.json      # Dependencies
-├── .env              # Environment variables
-├── public/           # Frontend files
-│   ├── login.html    # Login page
-│   ├── register.html # Registration page
-│   ├── index.html    # Home page
-│   ├── add.html      # Add expense page
-│   ├── dashboard.html # Dashboard page
-│   ├── css/          # Stylesheets
-│   └── js/           # Client-side JavaScript
-└── uploads/          # Temporary file storage
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
 ```
 
-## Development Notes
-- All expense operations are user-scoped
-- Sessions expire after 24 hours
-- File uploads are temporarily stored and deleted after processing
-- Frontend includes authentication checks and auto-redirect for protected pages
+**Add Expense**
+```javascript
+POST /api/expenses
+Content-Type: application/json
+
+{
+  "item": "Lunch at Restaurant",
+  "amount": 25.50,
+  "category": "Food",
+  "expense_date": "2024-01-15"
+}
+```
+
+## 📁 Project Structure
+
+```
+expense-tracker/
+├── server.js              # Main application entry point
+├── database.js            # MySQL connection and setup
+├── auth.js                 # Authentication middleware
+├── package.json            # Dependencies and scripts
+├── .env                    # Environment configuration
+├── .env.example           # Environment template
+├── README.md              # Project documentation
+├── .github/
+│   └── copilot-instructions.md
+├── public/                # Frontend assets
+│   ├── index.html         # Landing page
+│   ├── login.html         # Login page
+│   ├── register.html      # Registration page
+│   ├── add.html           # Add expense page
+│   ├── dashboard.html     # Dashboard page
+│   ├── profile.html       # User profile page
+│   ├── css/
+│   │   └── style.css      # Main stylesheet
+│   └── js/
+│       ├── main.js        # Common JavaScript
+│       ├── add.js         # Add expense functionality
+│       └── dashboard.js   # Dashboard functionality
+└── uploads/               # Temporary OCR file storage
+```
+
+## 🔒 Security Features
+
+- **Password Hashing** - bcrypt with 12 salt rounds
+- **Session Security** - Secure session configuration
+- **SQL Injection Protection** - Prepared statements with mysql2
+- **File Upload Security** - Temporary file cleanup
+- **Route Protection** - Authentication middleware for protected routes
+
+## 🌟 Technologies Used
+
+### Backend
+- **Node.js** - JavaScript runtime
+- **Express.js** - Web application framework
+- **MySQL2** - MySQL client for Node.js
+- **bcrypt** - Password hashing
+- **express-session** - Session middleware
+- **multer** - File upload handling
+- **axios** - HTTP client for OCR integration
+
+### Frontend
+- **HTML5** - Modern web markup
+- **CSS3** - Responsive styling
+- **JavaScript ES6+** - Modern JavaScript
+- **SweetAlert2** - Beautiful alerts and notifications
+
+### Database & DevOps
+- **MySQL 8.0** - Relational database
+- **Docker** - Containerization
+- **phpMyAdmin** - Database management
+
+## 🚀 Deployment
+
+### Production Setup
+
+1. **Environment Variables**
+   ```bash
+   NODE_ENV=production
+   DB_HOST=your-mysql-host
+   DB_USER=your-db-user
+   DB_PASSWORD=your-db-password
+   DB_NAME=expense_tracker
+   SESSION_SECRET=your-secret-key
+   OCR_SERVICE_URL=your-ocr-endpoint
+   ```
+
+2. **Database Setup**
+   - Ensure MySQL 8.0+ is installed
+   - Create database and user with proper permissions
+   - Tables will be created automatically on first run
+
+3. **Process Management**
+   ```bash
+   # Using PM2
+   npm install -g pm2
+   pm2 start server.js --name expense-tracker
+   pm2 startup
+   pm2 save
+   ```
+
+## 📊 Features Roadmap
+
+- [ ] Export expenses to CSV/Excel
+- [ ] Expense categories management
+- [ ] Budget tracking and alerts
+- [ ] Recurring expenses
+- [ ] Multi-currency support
+- [ ] Expense reports and analytics
+- [ ] Mobile app (React Native)
+- [ ] API rate limiting
+- [ ] Two-factor authentication
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
+
+**Adisak034**
+- GitHub: [@Adisak034](https://github.com/Adisak034)
+- Project Link: [https://github.com/Adisak034/Expense-Tracker](https://github.com/Adisak034/Expense-Tracker)
+
+## 🙏 Acknowledgments
+
+- [SweetAlert2](https://sweetalert2.github.io/) for beautiful notifications
+- [MySQL](https://www.mysql.com/) for reliable database management
+- [Express.js](https://expressjs.com/) for the robust web framework
+- [Docker](https://www.docker.com/) for containerization support
+
+---
+
+⭐ **Star this repository if it helped you!** ⭐
