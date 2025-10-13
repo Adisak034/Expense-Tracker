@@ -486,7 +486,7 @@ app.post('/api/webhook/ocr-result', (req, res) => {
 });
 
 // Upload image for OCR
-app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), async (req, res) => { 
+app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), (req, res) => { 
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
@@ -506,53 +506,32 @@ app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), async (r
 
         console.log(`Forwarding file to n8n webhook: ${N8N_WEBHOOK_URL}`);
 
-        const response = await axios.post(N8N_WEBHOOK_URL, form, {
+        // Fire-and-forget: Send to n8n but don't wait for the response.
+        // n8n will call our /api/webhook/ocr-result endpoint when it's done.
+        axios.post(N8N_WEBHOOK_URL, form, {
             headers: {
                 ...form.getHeaders()
-            },
-            timeout: 30000 // 30 seconds timeout
+            }
+        }).then(response => {
+            console.log('n8n initial response:', response.data);
+            // Clean up the file after successfully sending it
+            fs.unlink(filePath, (err) => {
+                if (err) console.error("Error deleting temp file after sending:", err);
+            });
+        }).catch(error => {
+            console.error('Error sending file to n8n:', error.message);
+            // Still try to clean up the file
+            fs.unlink(filePath, (err) => {
+                if (err) console.error("Error deleting temp file on error:", err);
+            });
         });
 
-        console.log('Received direct response from n8n:', response.data);
-
-        // Clean up the uploaded file
-        fs.unlink(filePath, (err) => {
-            if (err) console.error("Error deleting temp file:", err);
-        });
-
-        // Send the OCR data received from n8n directly back to the client.
-        // Ensure that response.data is not empty
-        if (!response.data || Object.keys(response.data).length === 0) {
-            console.warn('n8n returned an empty response. Sending error to client.');
-            return res.status(500).json({ error: 'OCR service returned no data.' });
-        }
-        res.json({
-            type: 'ocr-result',
-            data: response.data
-        });
+        // Immediately respond to the client that the upload was successful and processing has started.
+        res.json({ message: 'File uploaded, processing started.' });
 
     } catch (error) {
-        console.error('--- ERROR SENDING FILE TO N8N ---');
-        if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            console.error('Data:', error.response.data);
-            console.error('Status:', error.response.status);
-            console.error('Headers:', error.response.headers);
-        } else if (error.request) {
-            // The request was made but no response was received
-            console.error('No response received from n8n. It might have timed out.', error.message);
-        } else {
-            // Something happened in setting up the request that triggered an Error
-            console.error('Error Message:', error.message);
-        }
-        console.error('------------------------------------');
-
-        // Clean up the uploaded file in case of an error
-        fs.unlink(filePath, (err) => {
-            if (err) console.error("Error deleting temp file:", err);
-        });
-        res.status(500).json({ error: 'Failed to process OCR. Check server logs for details.' });
+        console.error('Error during file upload preparation:', error);
+        res.status(500).json({ error: 'Failed to handle file upload.' });
     }
 });
 

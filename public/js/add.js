@@ -8,10 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
         eventSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
             console.log('Received SSE data:', data);
-            
             if (data.type === 'ocr-result') {
+                Swal.close(); // Close loading alert
                 handleOCRResult(data.data);
-            } else if (data.type === 'connected') {
+            } else
+            if (data.type === 'connected') {
                 // This confirms the SSE connection is established on the server.
                 // It's a good place to enable UI elements if they were disabled.
                 console.log('[SSE] Connection established with server.');
@@ -229,19 +230,14 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Server error') });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(result => {
-            Swal.close(); // Close the loading alert on success
-            console.log('Received OCR result directly from server:', result);
-            if (result && result.type === 'ocr-result') {
-                handleOCRResult(result.data);
+            // The server now responds immediately. We just log the confirmation.
+            // The actual OCR data will arrive via SSE.
+            if (result.message === 'File uploaded, processing started.') {
+                console.log('Server confirmed upload. Waiting for OCR result via SSE...');
             } else {
-                throw new Error('Invalid data format received from server.');
+                throw new Error(result.error || 'Unexpected response from server.');
             }
         })
         .catch(error => {
@@ -258,14 +254,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle OCR result from SSE
     function handleOCRResult(ocrData) {
         console.log('Processing OCR result:', ocrData);
-        
-        // Close modal if open
-        closeOptionModal();
 
         // Clear any previous loading/error messages
         ocrResultDiv.innerHTML = '';
         
-        if (ocrData) {
+        // Check if ocrData is a non-empty object
+        if (ocrData && typeof ocrData === 'object' && Object.keys(ocrData).length > 0) {
             let resultHtml = `
                 <div class="ocr-result-card">
                     <div class="ocr-result-header">
