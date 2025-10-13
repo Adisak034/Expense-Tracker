@@ -466,7 +466,7 @@ function sendOCRResultToUser(userId, ocrData) {
 }
 
 // Webhook endpoint to receive OCR results from n8n
-// NOTE: This endpoint is no longer used by the primary OCR flow. The /api/ocr/upload endpoint now handles the response directly.
+// NOTE: This endpoint is now a fallback and should ideally not be used. The /api/ocr/upload endpoint should handle the response directly.
 app.post('/api/webhook/ocr-result', (req, res) => {
     console.log('Received OCR result from n8n:', req.body);
     
@@ -494,19 +494,17 @@ app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), (req, re
     const userId = req.session.userId;
     console.log(`File received from user ID ${userId}:`, req.file);
     const filePath = path.join(__dirname, req.file.path);
-    
+
     try {
         const form = new FormData();
         // IMPORTANT: n8n webhook must be configured to receive a file on the 'file' field
         form.append('file', fs.createReadStream(filePath));
-        // Pass the userId to n8n so it can be returned if needed, though we don't use it in this flow.
+        // Pass the userId to n8n so it can be returned in the webhook payload.
         form.append('userId', userId);
-        // Tell n8n to respond to this request directly instead of calling another webhook.
-        form.append('responseMode', 'direct');
 
         console.log(`Forwarding file to n8n webhook: ${N8N_WEBHOOK_URL}`);
 
-        // Fire-and-forget: Send to n8n but don't wait for the response.
+        // Fire-and-forget: Send to n8n but don't wait for the full OCR response.
         // n8n will call our /api/webhook/ocr-result endpoint when it's done.
         axios.post(N8N_WEBHOOK_URL, form, {
             headers: {

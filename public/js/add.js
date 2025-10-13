@@ -3,16 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
     window.initializeApp = function() {
         // Initialize SSE connection for real-time OCR updates
         // NOTE: This is no longer the primary method for receiving OCR results, but we keep it for now.
-        const eventSource = new EventSource('/api/sse/ocr-updates');
-        
+        // The SSE connection is no longer needed for the primary OCR flow.
+        // We can remove it to simplify the code.
+        const eventSource = new EventSource('/api/sse/ocr-updates'); // Kept for now for other potential features
         eventSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
             console.log('Received SSE data:', data);
             if (data.type === 'ocr-result') {
                 Swal.close(); // Close loading alert
                 handleOCRResult(data.data);
-            } else
-            if (data.type === 'connected') {
+            } else if (data.type === 'connected') {
                 // This confirms the SSE connection is established on the server.
                 // It's a good place to enable UI elements if they were disabled.
                 console.log('[SSE] Connection established with server.');
@@ -254,9 +254,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle OCR result from SSE
     function handleOCRResult(ocrData) {
         console.log('Processing OCR result:', ocrData);
-
-        // Clear any previous loading/error messages
-        ocrResultDiv.innerHTML = '';
         
         // Check if ocrData is a non-empty object
         if (ocrData && typeof ocrData === 'object' && Object.keys(ocrData).length > 0) {
