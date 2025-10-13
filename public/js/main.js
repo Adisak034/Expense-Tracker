@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     checkAuthStatus();
     loadExpenses();
     initializeFilters();
-    initializeAuth();
 });
 
 let currentExpenses = [];
@@ -19,9 +18,8 @@ function checkAuthStatus() {
             return response.json();
         })
         .then(data => {
-            if (data && data.user) {
-                document.getElementById('user-welcome').textContent = `สวัสดี, ${data.user.username}`;
-            }
+            // User is authenticated, no need to display welcome message
+            // Welcome message is now handled in profile page
         })
         .catch(error => {
             console.error('Auth check error:', error);
@@ -29,26 +27,7 @@ function checkAuthStatus() {
         });
 }
 
-function initializeAuth() {
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
-    }
-}
-
-function logout() {
-    fetch('/api/auth/logout', {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.location.href = '/login';
-    })
-    .catch(error => {
-        console.error('Logout error:', error);
-        window.location.href = '/login';
-    });
-}
+// Authentication functions moved to profile page
 
 // Load expenses from API
 function loadExpenses() {
@@ -177,15 +156,15 @@ function showExpenseDetail(id) {
         minimumFractionDigits: 2 
     });
 
-    const expenseList = document.getElementById('expense-list');
-    expenseList.innerHTML = `
-        <div class="expense-detail-page">
-            <div class="detail-header">
-                <button class="back-btn" onclick="loadExpenses()">← กลับ</button>
-                <h2>รายละเอียดรายการ</h2>
-                <div class="spacer"></div>
-            </div>
-            
+    const modal = document.getElementById('detail-edit-modal');
+    const modalContent = modal.querySelector('.modal-content');
+
+    modalContent.innerHTML = `
+        <div class="detail-header">
+            <h2>รายละเอียดรายการ</h2>
+            <button class="close-modal-btn" onclick="closeDetailModal()">×</button>
+        </div>
+        <div class="detail-body">
             <div class="expense-detail-card" id="expense-detail-${expense.id}">
                 <!-- Detail View -->
                 <div class="detail-view" id="detail-view-${expense.id}">
@@ -218,8 +197,8 @@ function showExpenseDetail(id) {
                 
                 <!-- Edit Form -->
                 <div class="edit-form-container" id="edit-form-${expense.id}" style="display: none;">
-                    <h3>✏️ Edit Expense</h3>
-                    <form class="simple-edit-form" onsubmit="updateExpense(event, ${expense.id})">
+                    <h3>✏️ แก้ไขรายการ</h3>
+                    <form class="simple-edit-form" id="edit-form-actual-${expense.id}" onsubmit="updateExpense(event, ${expense.id})">
                         <label for="edit-item-${expense.id}">รายการ:</label>
                         <input type="text" id="edit-item-${expense.id}" name="item" value="${expense.item}" required>
                         
@@ -238,16 +217,22 @@ function showExpenseDetail(id) {
                             <option value="บันเทิง" ${expense.category === 'บันเทิง' || expense.category === 'Entertainment' ? 'selected' : ''}>🎬 บันเทิง</option>
                             <option value="อื่นๆ" ${expense.category === 'อื่นๆ' || expense.category === 'Other' ? 'selected' : ''}>📝 อื่นๆ</option>
                         </select>
-                        
-                        <div class="edit-form-buttons">
-                            <button type="submit">✏️ แก้ไข</button>
-                            <button type="button" onclick="hideEditForm(${expense.id})" class="cancel-btn">❌ ยกเลิก</button>
-                        </div>
                     </form>
+                    <div class="edit-form-buttons">
+                        <button type="button" onclick="document.getElementById('edit-form-actual-${expense.id}').requestSubmit()" class="save-btn">✏️ บันทึกการแก้ไข</button>
+                        <button type="button" onclick="hideEditForm(${expense.id})" class="cancel-btn">❌ ยกเลิก</button>
+                    </div>
                 </div>
             </div>
         </div>
     `;
+
+    modal.style.display = 'flex';
+}
+
+function closeDetailModal() {
+    const modal = document.getElementById('detail-edit-modal');
+    modal.style.display = 'none';
 }
 
 // Show edit form
@@ -313,6 +298,7 @@ function updateExpense(event, id) {
         loadExpenses().then(() => {
             showExpenseDetail(id);
         });
+        closeDetailModal();
     })
     .catch(error => {
         console.error('Error updating expense:', error);
@@ -359,7 +345,9 @@ function deleteExpense(id) {
                         timer: 1500,
                         showConfirmButton: false
                     });
-                    loadExpenses(); // Go back to main list
+                    // Close modal and refresh list
+                    closeDetailModal();
+                    loadExpenses();
                 })
                 .catch(error => {
                     console.error('Error deleting expense:', error);
@@ -787,6 +775,7 @@ window.showEditForm = showEditForm;
 window.hideEditForm = hideEditForm;
 window.updateExpense = updateExpense;
 window.deleteExpense = deleteExpense;
+window.closeDetailModal = closeDetailModal;
 window.loadExpenses = loadExpenses;
 window.clearAllFilters = clearAllFilters;
 window.applyFilters = applyFilters;

@@ -16,7 +16,8 @@ function initializeDashboard() {
         .then(result => {
             allExpenses = result.data.map(expense => ({
                 ...expense,
-                expense_date: new Date(expense.expense_date)
+                expense_date: new Date(expense.expense_date),
+                amount: parseFloat(expense.amount) // Ensure amount is a number
             }));
             
             filterExpensesByPeriod(currentPeriod);
@@ -90,21 +91,22 @@ function filterExpensesByPeriod(period) {
 }
 
 function updateSummaryCards() {
-    const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalAmount = filteredExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
     const totalCount = filteredExpenses.length;
-    const maxExpense = filteredExpenses.length > 0 ? Math.max(...filteredExpenses.map(e => e.amount)) : 0;
+    const maxExpense = totalCount > 0 ? Math.max(...filteredExpenses.map(e => e.amount || 0)) : 0;
     
     // Calculate daily average
     let dailyAverage = 0;
-    if (filteredExpenses.length > 0) {
+    if (totalCount > 0) {
         const dates = [...new Set(filteredExpenses.map(e => e.expense_date.toDateString()))];
-        dailyAverage = totalAmount / Math.max(dates.length, 1);
+        const numberOfDays = Math.max(dates.length, 1);
+        dailyAverage = totalAmount / numberOfDays;
     }
     
-    document.getElementById('total-amount').textContent = `฿${totalAmount.toLocaleString()}`;
+    document.getElementById('total-amount').textContent = `฿${totalAmount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     document.getElementById('total-count').textContent = totalCount.toLocaleString();
-    document.getElementById('daily-average').textContent = `฿${dailyAverage.toFixed(0)}`;
-    document.getElementById('max-expense').textContent = `฿${maxExpense.toLocaleString()}`;
+    document.getElementById('daily-average').textContent = `฿${dailyAverage.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('max-expense').textContent = `฿${maxExpense.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function createCharts() {
@@ -116,26 +118,67 @@ function createCharts() {
 function createExpenseChart() {
     const ctx = document.getElementById('expense-chart').getContext('2d');
     
-    // Group expenses by date
-    const dailyExpenses = {};
-    filteredExpenses.forEach(expense => {
-        const dateStr = expense.expense_date.toISOString().split('T')[0];
-        dailyExpenses[dateStr] = (dailyExpenses[dateStr] || 0) + expense.amount;
-    });
-    
-    const labels = Object.keys(dailyExpenses).sort();
-    const amounts = labels.map(date => dailyExpenses[date]);
+    let labels = [];
+    let amounts = [];
+    let chartLabel = 'ค่าใช้จ่าย (฿)';
+
+    if (currentPeriod === 'month') {
+        // Group by week for the current month
+        const weeklyExpenses = [0, 0, 0, 0, 0]; // 5 weeks max
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        filteredExpenses.forEach(expense => {
+            const weekOfMonth = Math.floor((expense.expense_date.getDate() - 1) / 7);
+            weeklyExpenses[weekOfMonth] += expense.amount;
+        });
+        labels = ['สัปดาห์ที่ 1', 'สัปดาห์ที่ 2', 'สัปดาห์ที่ 3', 'สัปดาห์ที่ 4', 'สัปดาห์ที่ 5'].slice(0, weeklyExpenses.filter(a => a > 0).length || 4);
+        amounts = weeklyExpenses.slice(0, labels.length);
+        chartLabel = 'ค่าใช้จ่ายรายสัปดาห์ (฿)';
+
+    } else if (currentPeriod === 'year' || currentPeriod === 'all') {
+        // Group by month
+        const monthlyExpenses = {};
+        filteredExpenses.forEach(expense => {
+            const monthKey = expense.expense_date.getFullYear() + '-' + String(expense.expense_date.getMonth() + 1).padStart(2, '0');
+            monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + expense.amount;
+        });
+        labels = Object.keys(monthlyExpenses).sort().map(month => {
+            const [year, monthNum] = month.split('-');
+            return new Date(year, monthNum - 1).toLocaleDateString('th-TH', { year: 'numeric', month: 'short' });
+        });
+        amounts = Object.keys(monthlyExpenses).sort().map(month => monthlyExpenses[month]);
+        chartLabel = 'ค่าใช้จ่ายรายเดือน (฿)';
+
+    } else { // 'today' or 'week'
+        // Group by date
+        const dailyExpenses = {};
+        filteredExpenses.forEach(expense => {
+            const dateStr = expense.expense_date.toISOString().split('T')[0];
+            dailyExpenses[dateStr] = (dailyExpenses[dateStr] || 0) + expense.amount;
+        });
+        labels = Object.keys(dailyExpenses).sort().map(date => new Date(date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }));
+        amounts = Object.keys(dailyExpenses).sort().map(date => dailyExpenses[date]);
+        chartLabel = 'ค่าใช้จ่ายรายวัน (฿)';
+    }
     
     if (expenseChart) {
         expenseChart.destroy();
     }
     
+    // Update chart title
+    const chartBox = document.getElementById('expense-chart').closest('.chart-box');
+    if (chartBox) {
+        const titleElement = chartBox.querySelector('h3');
+        if (currentPeriod === 'month') titleElement.textContent = 'ค่าใช้จ่ายรายสัปดาห์';
+        else if (currentPeriod === 'year' || currentPeriod === 'all') titleElement.textContent = 'ค่าใช้จ่ายรายเดือน';
+        else titleElement.textContent = 'ค่าใช้จ่ายรายวัน';
+    }
+
     expenseChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels.map(date => new Date(date).toLocaleDateString('th-TH')),
+            labels: labels,
             datasets: [{
-                label: 'ค่าใช้จ่าย (฿)',
+                label: chartLabel,
                 data: amounts,
                 backgroundColor: 'rgba(255, 115, 0, 0.7)',
                 borderColor: 'rgba(255, 115, 0, 1)',
@@ -206,31 +249,49 @@ function createCategoryChart() {
 function createTrendChart() {
     const ctx = document.getElementById('trend-chart').getContext('2d');
     
-    // Group expenses by month
-    const monthlyExpenses = {};
-    allExpenses.forEach(expense => {
-        const monthKey = expense.expense_date.getFullYear() + '-' + 
-                        String(expense.expense_date.getMonth() + 1).padStart(2, '0');
-        monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + expense.amount;
-    });
-    
-    const labels = Object.keys(monthlyExpenses).sort();
-    const amounts = labels.map(month => monthlyExpenses[month]);
+    let labels = [];
+    let amounts = [];
+    let chartLabel = 'แนวโน้มค่าใช้จ่าย (฿)';
+
+    if (currentPeriod === 'year' || currentPeriod === 'all') {
+        // Group by month for longer periods
+        const monthlyExpenses = {};
+        filteredExpenses.forEach(expense => {
+            const monthKey = expense.expense_date.getFullYear() + '-' + String(expense.expense_date.getMonth() + 1).padStart(2, '0');
+            monthlyExpenses[monthKey] = (monthlyExpenses[monthKey] || 0) + expense.amount;
+        });
+        labels = Object.keys(monthlyExpenses).sort().map(month => {
+            const [year, monthNum] = month.split('-');
+            return new Date(year, monthNum - 1).toLocaleDateString('th-TH', { year: 'numeric', month: 'short' });
+        });
+        amounts = Object.keys(monthlyExpenses).sort().map(month => monthlyExpenses[month]);
+    } else {
+        // Group by day for shorter periods
+        const dailyExpenses = {};
+        filteredExpenses.forEach(expense => {
+            const dateStr = expense.expense_date.toISOString().split('T')[0];
+            dailyExpenses[dateStr] = (dailyExpenses[dateStr] || 0) + expense.amount;
+        });
+        labels = Object.keys(dailyExpenses).sort().map(date => new Date(date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }));
+        amounts = Object.keys(dailyExpenses).sort().map(date => dailyExpenses[date]);
+    }
     
     if (trendChart) {
         trendChart.destroy();
     }
     
+    // Update chart title
+    const chartBox = document.getElementById('trend-chart').closest('.chart-box');
+    if (chartBox) {
+        chartBox.querySelector('h3').textContent = 'แนวโน้มค่าใช้จ่าย';
+    }
+
     trendChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels.map(month => {
-                const [year, monthNum] = month.split('-');
-                const date = new Date(year, monthNum - 1);
-                return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short' });
-            }),
+            labels: labels,
             datasets: [{
-                label: 'ค่าใช้จ่ายรายเดือน (฿)',
+                label: chartLabel,
                 data: amounts,
                 borderColor: 'rgba(255, 115, 0, 1)',
                 backgroundColor: 'rgba(255, 115, 0, 0.1)',
@@ -256,7 +317,7 @@ function createTrendChart() {
 }
 
 function displayRecentExpenses() {
-    const recentExpenses = [...allExpenses]
+    const recentExpenses = [...filteredExpenses]
         .sort((a, b) => b.expense_date - a.expense_date)
         .slice(0, 10);
     
@@ -294,5 +355,5 @@ function getItemCategory(item) {
 function updateDashboard() {
     updateSummaryCards();
     createCharts();
-    // Don't update recent expenses as it should always show all recent expenses
+    displayRecentExpenses();
 }

@@ -5,21 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Dashboard</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <header>
         <h1>แดชบอร์ดค่าใช้จ่าย</h1>
-        <nav>
-            <a href="/">หน้าแรก</a>
-            <a href="/add">เพิ่มค่าใช้จ่าย</a>
-            <a href="/dashboard">แดชบอร์ด</a>
-            <a href="/profile">ข้อมูลส่วนตัว</a>
-        </nav>
-        <div class="user-info">
-            <span id="user-welcome"></span>
-            <button id="logout-btn" class="logout-btn">ออกจากระบบ</button>
-        </div>
     </header>
     <main>
         <!-- Date Filter Section -->
@@ -109,10 +102,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/js/dashboard.js"></script>
     <script>
-        // Add authentication check and logout functionality
+        // Add authentication check
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthStatus();
-            initializeAuth();
         });
 
         function checkAuthStatus() {
@@ -124,37 +116,17 @@
                     }
                     return response.json();
                 })
-                .then(data => {
-                    if (data && data.user) {
-                        document.getElementById('user-welcome').textContent = `สวัสดี, ${data.user.username}`;
-                    }
-                })
                 .catch(error => {
                     console.error('Auth check error:', error);
                     window.location.href = '/login';
                 });
         }
-
-        function initializeAuth() {
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', logout);
-            }
-        }
-
-        function logout() {
-            fetch('/api/auth/logout', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                window.location.href = '/login';
-            })
-            .catch(error => {
-                console.error('Logout error:', error);
-                window.location.href = '/login';
-            });
-        }
     </script>
+    <nav>
+        <a href="/">หน้าแรก</a>
+        <a href="/add">เพิ่มค่าใช้จ่าย</a>
+        <a href="/dashboard">แดชบอร์ด</a>
+        <a href="/profile">ข้อมูลส่วนตัว</a>
+    </nav>
 </body>
 </html>

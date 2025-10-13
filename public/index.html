@@ -5,21 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <header>
         <h1>รายการค่าใช้จ่าย</h1>
-        <nav>
-            <a href="/">หน้าแรก</a>
-            <a href="/add">เพิ่มค่าใช้จ่าย</a>
-            <a href="/dashboard">แดชบอร์ด</a>
-            <a href="/profile">ข้อมูลส่วนตัว</a>
-        </nav>
-        <div class="user-info">
-            <span id="user-welcome"></span>
-            <button id="logout-btn" class="logout-btn">ออกจากระบบ</button>
-        </div>
     </header>
     <main>
         
@@ -165,7 +158,22 @@
             </div>
         </div>
     </main>
+
+    <!-- Detail/Edit Modal -->
+    <div id="detail-edit-modal" class="detail-modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeDetailModal()"></div>
+        <div class="modal-content">
+            <!-- Content will be injected by JavaScript -->
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/js/main.js?v=31"></script>
+    <nav>
+        <a href="/">หน้าแรก</a>
+        <a href="/add">เพิ่มค่าใช้จ่าย</a>
+        <a href="/dashboard">แดชบอร์ด</a>
+        <a href="/profile">ข้อมูลส่วนตัว</a>
+    </nav>
 </body>
 </html>

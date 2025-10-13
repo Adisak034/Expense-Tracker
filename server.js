@@ -232,6 +232,47 @@ app.put('/api/auth/change-password', auth.requireAuth, async (req, res) => {
     }
 });
 
+// Delete user account
+app.delete('/api/auth/delete-account', auth.requireAuth, async (req, res) => {
+    const userId = req.session.userId;
+    console.log(`[API] DELETE /api/auth/delete-account - Attempting to delete user ID: ${userId}`);
+
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // 1. Delete all expenses for the user
+        console.log(`Deleting expenses for user ID: ${userId}`);
+        await connection.execute('DELETE FROM expenses WHERE user_id = ?', [userId]);
+
+        // 2. Delete the user
+        console.log(`Deleting user with ID: ${userId}`);
+        const [result] = await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
+
+        if (result.affectedRows === 0) {
+            throw new Error('ไม่พบผู้ใช้ที่จะลบ');
+        }
+
+        await connection.commit();
+        console.log(`User ${userId} deleted successfully.`);
+
+        // 3. Destroy the session
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Error destroying session after account deletion:', err);
+            }
+            res.clearCookie('connect.sid');
+            res.status(204).send(); // 204 No Content is appropriate for a successful DELETE
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Account deletion error:', error);
+        res.status(500).json({ error: 'เกิดข้อผิดพลาดร้ายแรงในการลบบัญชี' });
+    } finally {
+        connection.release();
+    }
+});
+
 // --- API Routes ---
 
 // Get all expenses (protected route)
@@ -375,21 +416,20 @@ app.delete('/api/expenses/:id', auth.requireAuth, async (req, res) => {
 });
 
 // SSE endpoint for real-time updates
-app.get('/api/sse/ocr-updates', (req, res) => {
+app.get('/api/sse/ocr-updates', auth.requireAuth, (req, res) => {
     // Set headers for SSE
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
     });
 
     // Add client to the list
     const clientId = Date.now();
     const newClient = {
         id: clientId,
-        response: res
+        response: res,
+        userId: req.session.userId // Associate connection with user
     };
     sseClients.push(newClient);
 
@@ -399,32 +439,40 @@ app.get('/api/sse/ocr-updates', (req, res) => {
     // Remove client when connection closes
     req.on('close', () => {
         sseClients = sseClients.filter(client => client.id !== clientId);
-        console.log(`Client ${clientId} disconnected from SSE`);
+        console.log(`Client ${clientId} (User: ${newClient.userId}) disconnected from SSE`);
     });
 });
 
 // Function to broadcast OCR results to all connected clients
-function broadcastOCRResult(ocrData) {
+function sendOCRResultToUser(userId, ocrData) {
     const message = JSON.stringify({
         type: 'ocr-result',
         data: ocrData
     });
 
-    sseClients.forEach(client => {
+    const client = sseClients.find(c => c.userId === userId);
+
+    if (client) {
         try {
             client.response.write(`data: ${message}\n\n`);
+            console.log(`Sent OCR result to user ${userId}`);
         } catch (error) {
-            console.error('Error sending SSE message:', error);
+            console.error(`Error sending SSE message to user ${userId}:`, error);
         }
-    });
+    }
 }
 
 // Webhook endpoint to receive OCR results from n8n
 app.post('/api/webhook/ocr-result', (req, res) => {
     console.log('Received OCR result from n8n:', req.body);
     
-    // Broadcast the OCR result to all connected clients
-    broadcastOCRResult(req.body);
+    const { userId, ...ocrData } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ "message": "Missing userId in webhook payload" });
+    }
+    
+    sendOCRResultToUser(parseInt(userId, 10), ocrData);
     
     res.json({
         "message": "OCR result received and broadcasted successfully",
@@ -433,18 +481,21 @@ app.post('/api/webhook/ocr-result', (req, res) => {
 });
 
 // Upload image for OCR
-app.post('/api/ocr/upload', upload.single('ocrFile'), async (req, res) => {
+app.post('/api/ocr/upload', auth.requireAuth, upload.single('ocrFile'), async (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
 
-    console.log('File received:', req.file);
+    const userId = req.session.userId;
+    console.log(`File received from user ID ${userId}:`, req.file);
     const filePath = path.join(__dirname, req.file.path);
     
     try {
         const form = new FormData();
         // IMPORTANT: n8n webhook must be configured to receive a file on the 'file' field
         form.append('file', fs.createReadStream(filePath));
+        // Pass the userId to n8n
+        form.append('userId', userId);
 
         console.log(`Forwarding file to n8n webhook: ${N8N_WEBHOOK_URL}`);
 

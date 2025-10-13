@@ -1,19 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize SSE connection for real-time OCR updates
-    const eventSource = new EventSource('/api/sse/ocr-updates');
-    
-    eventSource.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        console.log('Received SSE data:', data);
+    // This function will be called by the auth check at the bottom of add.html
+    window.initializeApp = function() {
+        // Initialize SSE connection for real-time OCR updates
+        const eventSource = new EventSource('/api/sse/ocr-updates');
         
-        if (data.type === 'ocr-result') {
-            handleOCRResult(data.data);
-        }
-    };
-    
-    eventSource.onerror = function(error) {
-        console.error('SSE Error:', error);
-    };
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Received SSE data:', data);
+            
+            if (data.type === 'ocr-result') {
+                handleOCRResult(data.data);
+            }
+        };
+        
+        eventSource.onerror = function(error) {
+            console.error('SSE Error:', error);
+        };
+    }
 
     const addExpenseForm = document.getElementById('add-expense-form');
     addExpenseForm.addEventListener('submit', function(e) {
@@ -223,28 +226,34 @@ document.addEventListener('DOMContentLoaded', function() {
         // Close modal if open
         closeOptionModal();
         
-        // Display OCR result
-        let resultHtml = '<h3>ผลการสแกน:</h3>';
-        
         if (ocrData) {
-            // Display structured data nicely
-            if (ocrData['Items '] || ocrData.Items) {
-                resultHtml += `<p><strong>รายการ:</strong> ${ocrData['Items '] || ocrData.Items}</p>`;
-            }
-            if (ocrData.Amount || ocrData.amount) {
-                resultHtml += `<p><strong>จำนวนเงิน:</strong> ${ocrData.Amount || ocrData.amount} บาท</p>`;
-            }
-            if (ocrData.Date || ocrData.date) {
-                resultHtml += `<p><strong>วันที่:</strong> ${ocrData.Date || ocrData.date}</p>`;
-            }
-            
-            ocrResultDiv.innerHTML = resultHtml;
-            
-            // Show selected image preview if available
+            let resultHtml = `
+                <div class="ocr-result-card">
+                    <div class="ocr-result-header">
+                        <h3>📄 ผลการสแกน</h3>
+                        <p>ข้อมูลที่ดึงได้จากรูปภาพ:</p>
+                    </div>
+                    <div class="ocr-result-content">
+            `;
+
             if (selectedFile) {
-                showImagePreview(selectedFile);
+                const imageUrl = URL.createObjectURL(selectedFile);
+                resultHtml += `<div class="ocr-image-preview"><img src="${imageUrl}" alt="Scanned image"></div>`;
             }
+
+            resultHtml += `<div class="ocr-data-list">`;
+
+            const item = ocrData['Items '] || ocrData.Items || ocrData.item;
+            const amount = ocrData.Amount || ocrData.amount;
+            const date = ocrData.Date || ocrData.date;
+
+            if (item) resultHtml += `<div class="ocr-data-item"><span class="data-label">รายการ:</span><span class="data-value">${item}</span></div>`;
+            if (amount) resultHtml += `<div class="ocr-data-item"><span class="data-label">จำนวนเงิน:</span><span class="data-value">${amount} บาท</span></div>`;
+            if (date) resultHtml += `<div class="ocr-data-item"><span class="data-label">วันที่:</span><span class="data-value">${date}</span></div>`;
             
+            resultHtml += `</div></div></div>`;
+            ocrResultDiv.innerHTML = resultHtml;
+
             // Auto-fill form fields with structured data
             autoFillFormFromOCR(ocrData);
             
@@ -257,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonColor: '#ff7300'
             });
         } else {
-            ocrResultDiv.innerHTML = 'ไม่สามารถแยกข้อความจากรูปภาพได้';
+            ocrResultDiv.innerHTML = '<div class="error-message">ไม่สามารถแยกข้อความจากรูปภาพได้</div>';
             Swal.fire({
                 title: 'ไม่พบข้อมูล 📄❌',
                 text: 'ไม่สามารถแยกข้อความจากรูปภาพได้ กรุณาลองใหม่',

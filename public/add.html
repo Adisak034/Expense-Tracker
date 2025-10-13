@@ -5,21 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Expense</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <header>
         <h1>เพิ่มค่าใช้จ่าย</h1>
-        <nav>
-            <a href="/">หน้าแรก</a>
-            <a href="/add">เพิ่มค่าใช้จ่าย</a>
-            <a href="/dashboard">แดชบอร์ด</a>
-            <a href="/profile">ข้อมูลส่วนตัว</a>
-        </nav>
-        <div class="user-info">
-            <span id="user-welcome"></span>
-            <button id="logout-btn" class="logout-btn">ออกจากระบบ</button>
-        </div>
     </header>
     <main>
         <form id="add-expense-form">
@@ -42,8 +35,8 @@
             <button type="submit">เพิ่มค่าใช้จ่าย</button>
         </form>
         
-        <h2>สแกนรูปภาพ</h2>
         <div class="scan-section">
+            <h2>หรือสแกนจากใบเสร็จ</h2>
             <button id="scan-btn" class="scan-button">📷 สแกนรูปภาพ</button>
         </div>
         
@@ -58,11 +51,11 @@
                     <h3>เลือกวิธีการสแกน</h3>
                     <div class="option-buttons">
                         <button id="camera-option-btn" class="option-button">
-                            <span class="option-icon">📷</span>
+                            <span class="option-icon"></span>
                             <span class="option-text">ถ่ายรูปใหม่</span>
                         </button>
                         <button id="gallery-option-btn" class="option-button">
-                            <span class="option-icon">🖼️</span>
+                            <span class="option-icon"></span>
                             <span class="option-text">เลือกจากแกลเลอรี่</span>
                         </button>
                     </div>
@@ -72,8 +65,8 @@
                 <div id="preview-step" style="display: none;">
                     <h3>ตรวจสอบรูปภาพ</h3>
                     <div id="modal-image-preview"></div>
+                    <button id="upload-from-modal" class="upload-modal-button">📤 อัปโหลดและสแกน</button>
                     <div class="preview-buttons">
-                        <button id="upload-from-modal" class="upload-modal-button">📤 อัปโหลดและสแกน</button>
                         <button id="back-to-selection" class="back-button">🔄 เลือกใหม่</button>
                         <button id="close-preview-btn" class="close-option-button">ยกเลิก</button>
                     </div>
@@ -89,10 +82,9 @@
     </main>
     <script src="/js/add.js"></script>
     <script>
-        // Add authentication check and logout functionality
+        // Add authentication check
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthStatus();
-            initializeAuth();
         });
 
         function checkAuthStatus() {
@@ -102,39 +94,20 @@
                         window.location.href = '/login';
                         return;
                     }
+                    initializeApp(); // Start SSE connection after auth is confirmed
                     return response.json();
-                })
-                .then(data => {
-                    if (data && data.user) {
-                        document.getElementById('user-welcome').textContent = `สวัสดี, ${data.user.username}`;
-                    }
                 })
                 .catch(error => {
                     console.error('Auth check error:', error);
                     window.location.href = '/login';
                 });
         }
-
-        function initializeAuth() {
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', logout);
-            }
-        }
-
-        function logout() {
-            fetch('/api/auth/logout', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                window.location.href = '/login';
-            })
-            .catch(error => {
-                console.error('Logout error:', error);
-                window.location.href = '/login';
-            });
-        }
     </script>
+    <nav>
+        <a href="/">หน้าแรก</a>
+        <a href="/add">เพิ่มค่าใช้จ่าย</a>
+        <a href="/dashboard">แดชบอร์ด</a>
+        <a href="/profile">ข้อมูลส่วนตัว</a>
+    </nav>
 </body>
 </html>
