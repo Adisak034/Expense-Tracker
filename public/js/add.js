@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closePreviewBtn = document.getElementById('close-preview-btn');
     
     let selectedFile = null;
+    let selectedFileUrl = null; // Variable to store the image Data URL
 
     // Main scan button - opens option modal
     scanBtn.addEventListener('click', function() {
@@ -126,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
     backToSelection.addEventListener('click', function() {
         showSelectionStep();
         selectedFile = null;
+        selectedFileUrl = null;
     });
 
     // Camera option - opens native camera app
@@ -142,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ocrFileGallery.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             selectedFile = e.target.files[0];
-            showImagePreviewInModal(selectedFile);
+            generateAndShowImagePreview(selectedFile);
             showPreviewStep();
         }
     });
@@ -151,20 +153,21 @@ document.addEventListener('DOMContentLoaded', function() {
     ocrFileCamera.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             selectedFile = e.target.files[0];
-            showImagePreviewInModal(selectedFile);
+            generateAndShowImagePreview(selectedFile);
             showPreviewStep();
         }
     });
 
-    // Show image preview in modal
-    function showImagePreviewInModal(file) {
+    // Generate a Data URL from the file and show the preview in the modal
+    function generateAndShowImagePreview(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
+            selectedFileUrl = e.target.result; // Store the Data URL
             modalImagePreview.innerHTML = `
-                <img src="${e.target.result}" alt="Selected image">
+                <img src="${selectedFileUrl}" alt="Selected image">
             `;
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(file); // This generates the Data URL
     }
 
     // Show image preview (outside modal - for backward compatibility)
@@ -236,9 +239,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="ocr-result-content">
             `;
 
-            if (selectedFile) {
-                const imageUrl = URL.createObjectURL(selectedFile);
-                resultHtml += `<div class="ocr-image-preview"><img src="${imageUrl}" alt="Scanned image"></div>`;
+            if (selectedFileUrl) {
+                resultHtml += `<div class="ocr-image-preview"><img src="${selectedFileUrl}" alt="Scanned image"></div>`;
             }
 
             resultHtml += `<div class="ocr-data-list">`;

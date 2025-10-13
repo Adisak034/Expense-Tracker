@@ -450,12 +450,13 @@ function sendOCRResultToUser(userId, ocrData) {
         data: ocrData
     });
 
-    const client = sseClients.find(c => c.userId === userId);
+    // Compare userId as numbers to avoid type mismatch (e.g., 123 vs "123")
+    const client = sseClients.find(c => Number(c.userId) === Number(userId));
 
     if (client) {
         try {
             client.response.write(`data: ${message}\n\n`);
-            console.log(`Sent OCR result to user ${userId}`);
+            console.log(`[SSE] Sent OCR result to user ${userId}`);
         } catch (error) {
             console.error(`Error sending SSE message to user ${userId}:`, error);
         }
@@ -472,7 +473,8 @@ app.post('/api/webhook/ocr-result', (req, res) => {
         return res.status(400).json({ "message": "Missing userId in webhook payload" });
     }
     
-    sendOCRResultToUser(parseInt(userId, 10), ocrData);
+    // No need to parseInt here as the comparison in sendOCRResultToUser handles it
+    sendOCRResultToUser(userId, ocrData);
     
     res.json({
         "message": "OCR result received and broadcasted successfully",
