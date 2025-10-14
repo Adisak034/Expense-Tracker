@@ -1,145 +1,141 @@
-# 💰 Expense Tracker
+# 💰 Expense Tracker (โปรแกรมติดตามค่าใช้จ่าย)
 
-A modern, full-featured expense tracking application built with Node.js, Express, and MySQL. Features user authentication, OCR receipt processing, and a beautiful responsive UI.
+แอปพลิเคชันติดตามค่าใช้จ่ายที่ทันสมัยและมีฟีเจอร์ครบครัน สร้างขึ้นด้วย Node.js, Express และ MySQL พร้อมระบบยืนยันตัวตนผู้ใช้, การประมวลผลใบเสร็จด้วย OCR และ UI ที่สวยงามและตอบสนองต่อทุกอุปกรณ์
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-## ✨ Features
+## ✨ คุณสมบัติเด่น
 
-### 🔐 User Authentication
-- **Secure Registration & Login** - bcrypt password hashing with salt rounds
-- **Session Management** - Express-session for secure user sessions
-- **Protected Routes** - Middleware-based route protection
-- **Profile Management** - Complete user profile with statistics
+### 🔐 ระบบยืนยันตัวตนผู้ใช้
+- **การลงทะเบียนและเข้าสู่ระบบที่ปลอดภัย** - เข้ารหัสผ่านด้วย bcrypt
+- **การจัดการเซสชัน** - ใช้ Express-session เพื่อความปลอดภัย
+- **เส้นทางที่ป้องกัน** - การป้องกันเส้นทางด้วย Middleware
+- **การจัดการโปรไฟล์** - หน้าโปรไฟล์พร้อมสถิติการใช้งาน
 
-### 💸 Expense Management
-- **Add Expenses** - Quick expense entry with categories
-- **View Dashboard** - Beautiful dashboard with expense overview
-- **Category Management** - Organize expenses by categories
-- **Date Filtering** - Filter expenses by date ranges
-- **User-specific Data** - Each user sees only their own expenses
+### 💸 การจัดการค่าใช้จ่าย
+- **เพิ่มค่าใช้จ่าย** - บันทึกค่าใช้จ่ายพร้อมหมวดหมู่ได้อย่างรวดเร็ว
+- **แดชบอร์ด** - ภาพรวมค่าใช้จ่ายที่สวยงาม
+- **การจัดการหมวดหมู่** - จัดระเบียบค่าใช้จ่ายตามหมวดหมู่
+- **การกรองตามวันที่** - กรองข้อมูลค่าใช้จ่ายตามช่วงวันที่
+- **ข้อมูลเฉพาะผู้ใช้** - ผู้ใช้แต่ละคนจะเห็นเฉพาะข้อมูลของตนเอง
 
-### 📱 Modern UI/UX
-- **Responsive Design** - Mobile-first approach with bottom navigation
-- **SweetAlert2 Integration** - Beautiful notifications and confirmations
-- **Clean Interface** - Modern, intuitive user interface
+### 📱 UI/UX ที่ทันสมัย
+- **การออกแบบที่ตอบสนอง** - รองรับการใช้งานบนมือถือเป็นหลักพร้อมเมนูนำทางด้านล่าง
+- **การแจ้งเตือนด้วย SweetAlert2** - การแจ้งเตือนและยืนยันที่สวยงาม
+- **อินเทอร์เฟซที่สะอาดตา** - ทันสมัยและใช้งานง่าย
 
-### 🔍 OCR Integration
-- **Receipt Processing** - Upload receipts for automatic data extraction
-- **n8n Workflow** - Uses a powerful n8n workflow to process images, call an external OCR API, and send structured data back to the application. (See [n8n Workflow Setup](#-n8n-workflow-for-ocr))
-- **Automatic Cleanup** - Temporary files are automatically removed
-- **Real-time Updates** - Uses Server-Sent Events (SSE) to notify the user when OCR processing is complete.
+### 🔍 การผสานการทำงานกับ OCR
+- **การประมวลผลใบเสร็จ** - อัปโหลดใบเสร็จเพื่อดึงข้อมูลอัตโนมัติ
+- **n8n Workflow** - ใช้ n8n workflow ในการประมวลผลภาพ, เรียกใช้ OCR API ภายนอก, และส่งข้อมูลกลับมายังแอปพลิเคชัน (ดู [การตั้งค่า n8n Workflow](#-n8n-workflow-setup))
+- **การลบไฟล์อัตโนมัติ** - ไฟล์ชั่วคราวจะถูกลบออกโดยอัตโนมัติ
+- **อัปเดตแบบเรียลไทม์** - ใช้ Server-Sent Events (SSE) เพื่อแจ้งเตือนผู้ใช้เมื่อการประมวลผล OCR เสร็จสิ้น
 
-## 🚀 Quick Start
+## 🚀 เริ่มต้นใช้งาน
 
-### Prerequisites
+### สิ่งที่ต้องมี
 
-- **Node.js** (v14 or higher)
-- **Docker** (for MySQL database)
-- **npm** package manager
+- **Node.js** (เวอร์ชัน 14 หรือสูงกว่า)
+- **Docker** (สำหรับฐานข้อมูล MySQL)
+- **npm**
 
-### Installation
+### การติดตั้ง
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Adisak034/Expense-Tracker.git
-   cd Expense-Tracker
-   ```
+1.  **โคลนโปรเจกต์**
+    ```bash
+    git clone https://github.com/Adisak034/Expense-Tracker.git
+    cd Expense-Tracker
+    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2.  **ติดตั้ง Dependencies**
+    ```bash
+    npm install
+    ```
 
-3. **Set up MySQL Database**
-   ```bash
-   docker run --name expense-mysql \
-     -e MYSQL_ROOT_PASSWORD=rootpassword \
-     -e MYSQL_DATABASE=expense_tracker \
-     -e MYSQL_USER=expense_user \
-     -e MYSQL_PASSWORD=mypassword \
-     -p 3306:3306 -d mysql:8.0
-   ```
+3.  **ตั้งค่าฐานข้อมูล MySQL**
+    ```bash
+    docker run --name expense-mysql \
+      -e MYSQL_ROOT_PASSWORD=rootpassword \
+      -e MYSQL_DATABASE=expense_tracker \
+      -e MYSQL_USER=expense_user \
+      -e MYSQL_PASSWORD=mypassword \
+      -p 3306:3306 -d mysql:8.0
+    ```
 
-4. **Configure Environment**
-   ```bash
-   # Copy and edit environment file
-   cp .env.example .env
-   ```
+4.  **ตั้งค่า Environment**
+    ```bash
+    # คัดลอกและแก้ไขไฟล์ .env
+    cp .env.example .env
+    ```
 
-5. **Start the Application**
-   ```bash
-   npm start
-   ```
+5.  **รันแอปพลิเคชัน**
+    ```bash
+    npm start
+    ```
 
-6. **Access the Application**
-   - Open your browser and go to: `http://localhost:3000`
-   - Register a new account or login with existing credentials
+6.  **เข้าใช้งาน**
+    - เปิดเบราว์เซอร์และไปที่: `http://localhost:3000`
+    - ลงทะเบียนผู้ใช้ใหม่หรือเข้าสู่ระบบด้วยบัญชีที่มีอยู่
 
-## ⚙️ n8n Workflow Setup
+## ⚙️ การตั้งค่า n8n Workflow
 
-This project uses n8n to handle the OCR (Optical Character Recognition) process. The Node.js server uploads a receipt image to an n8n webhook, which then processes the image and sends the extracted data back.
+โปรเจกต์นี้ใช้ n8n เพื่อจัดการกระบวนการ OCR (Optical Character Recognition) โดยเซิร์ฟเวอร์ Node.js จะอัปโหลดภาพใบเสร็จไปยัง n8n webhook ซึ่งจะประมวลผลภาพและส่งข้อมูลที่ดึงออกมาได้กลับมา
 
-### 1. Set up n8n
+### 1. ตั้งค่า n8n
 
-The easiest way to run n8n is with Docker:
+วิธีที่ง่ายที่สุดในการรัน n8n คือใช้ Docker:
 ```bash
 docker run -it --rm --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n n8nio/n8n
 ```
-Access n8n at `http://localhost:5678`.
+เข้าใช้งาน n8n ได้ที่ `http://localhost:5678`
 
-### 2. Import the Workflow
+### 2. นำเข้า Workflow
 
-1.  Go to your n8n canvas.
-2.  Click on `Workflows` in the left sidebar.
-3.  Click `Import from File` and select the `n8n_workflow/Expense-Tracker-Workflow.json` file from this project.
+1.  ไปที่หน้า n8n canvas
+2.  คลิก `Workflows` ที่แถบด้านซ้าย
+3.  คลิก `Import from File` และเลือกไฟล์ `n8n_workflow/Expense-Tracker-Workflow.json` จากโปรเจกต์นี้
 
-### 3. Configure and Activate
+### 3. กำหนดค่าและเปิดใช้งาน
 
-1.  **Get Webhook URL**: After importing, open the "Webhook1" node. You will see a **Test URL** and a **Production URL**. Copy the **Production URL**. It will look something like `http://localhost:5678/webhook/upload-webhook`.
-2.  **Update Server Config**: Paste this URL into your `.env` file for the `N8N_WEBHOOK_URL` variable. Alternatively, you can update it directly in `server.js`.
-    ```javascript
-    // in server.js
-    const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/upload-webhook';
-    ```
-3.  **Check OCR API Key**: The "iApp Recipt OCR" node uses a `demo` API key. For production use, you should replace this with your own key from the OCR provider.
-4.  **Verify Callback URL**: The "ส่งข้อมูล" (Send Data) node in the workflow is configured to send results back to `http://localhost:3000/api/webhook/ocr-result`. If your Expense Tracker app is running on a different address or port, you **must** update the URL in that node.
-5.  **Activate Workflow**: Activate the workflow by toggling the `Active` switch at the top right of the n8n canvas. Your OCR processing is now ready!
+1.  **รับ Webhook URL**: หลังจากนำเข้า ให้เปิดโหนด "Webhook1" คุณจะเห็น **Test URL** และ **Production URL** ให้คัดลอก **Production URL** ซึ่งจะมีลักษณะคล้าย `http://localhost:5678/webhook/upload-webhook`
+2.  **อัปเดตค่าในเซิร์ฟเวอร์**: นำ URL ที่คัดลอกมาไปวางในไฟล์ `.env` สำหรับตัวแปร `N8N_WEBHOOK_URL`
+3.  **ตรวจสอบ OCR API Key**: โหนด "iApp Recipt OCR" ใช้ API key `demo` สำหรับการใช้งานจริง ควรเปลี่ยนเป็นคีย์ของคุณเอง
+4.  **ตรวจสอบ Callback URL**: โหนด "ส่งข้อมูล" (Send Data) ถูกตั้งค่าให้ส่งผลลัพธ์กลับไปที่ `http://localhost:3000/api/webhook/ocr-result` หากแอปของคุณรันบนที่อยู่หรือพอร์ตอื่น **ต้อง** อัปเดต URL ในโหนดนั้น
+5.  **เปิดใช้งาน Workflow**: เปิดใช้งานโดยการสลับสวิตช์ `Active` ที่มุมบนขวาของ n8n canvas
 
-### Workflow Explained
+### คำอธิบาย Workflow
 
-The imported workflow (`Expense-Tracker-Workflow.json`) performs the following steps:
-1.  **Webhook1**: Receives the image file and `userId` from the Node.js application.
-2.  **Extract from File1 / Convert to File1**: Prepares the file for the OCR API.
-3.  **iApp Recipt OCR**: Sends the image to the `iapp.co.th` OCR service for processing.
-4.  **If**: Checks if the OCR process was successful.
-5.  **ส่งข้อมูล (Send Data)**: If successful, it sends the extracted `Items`, `Amount`, and `Date` along with the original `userId` back to the Node.js application's webhook (`/api/webhook/ocr-result`).
-6.  **ส่งข้อผิดพลาด (Send Error)**: If it fails, it sends an error message.
+Workflow ที่นำเข้ามา (`Expense-Tracker-Workflow.json`) ทำงานดังนี้:
+1.  **Webhook1**: รับไฟล์ภาพและ `userId` จากแอปพลิเคชัน Node.js
+2.  **Extract from File1 / Convert to File1**: เตรียมไฟล์สำหรับ OCR API
+3.  **iApp Recipt OCR**: ส่งภาพไปยังบริการ OCR ของ `iapp.co.th`
+4.  **If**: ตรวจสอบว่าการทำ OCR สำเร็จหรือไม่
+5.  **ส่งข้อมูล (Send Data)**: หากสำเร็จ จะส่ง `Items`, `Amount`, และ `Date` พร้อม `userId` กลับไปยัง webhook ของแอปพลิเคชัน (`/api/webhook/ocr-result`)
+6.  **ส่งข้อผิดพลาด (Send Error)**: หากล้มเหลว จะส่งข้อความแสดงข้อผิดพลาด
 
-## 🗄️ Database Management
+## 🗄️ การจัดการฐานข้อมูล
 
-### View Database with GUI
+### ดูฐานข้อมูลผ่าน GUI
 
-**Option 1: phpMyAdmin (Recommended)**
+**ตัวเลือกที่ 1: phpMyAdmin (แนะนำ)**
 ```bash
 docker run --name phpmyadmin -d --link expense-mysql:db -p 8080:80 phpmyadmin/phpmyadmin
 ```
-Access at: `http://localhost:8080`
-- Username: `expense_user`
-- Password: `mypassword`
+เข้าใช้งานที่: `http://localhost:8080`
+- ชื่อผู้ใช้: `expense_user`
+- รหัสผ่าน: `mypassword`
 
-**Option 2: MySQL Workbench**
+**ตัวเลือกที่ 2: MySQL Workbench**
 - Host: `localhost:3306`
-- Username: `expense_user`
-- Password: `mypassword`
-- Database: `expense_tracker`
+- ชื่อผู้ใช้: `expense_user`
+- รหัสผ่าน: `mypassword`
+- ฐานข้อมูล: `expense_tracker`
 
-### Database Schema
+### โครงสร้างฐานข้อมูล
 
-**Users Table**
+**ตาราง Users**
 ```sql
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -150,7 +146,7 @@ CREATE TABLE users (
 );
 ```
 
-**Expenses Table**
+**ตาราง Expenses**
 ```sql
 CREATE TABLE expenses (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -164,36 +160,36 @@ CREATE TABLE expenses (
 );
 ```
 
-## 🔧 API Documentation
+## 🔧 เอกสาร API
 
-### Authentication Endpoints
+### Endpoints สำหรับการยืนยันตัวตน
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | คำอธิบาย | ต้องยืนยันตัวตน |
 |--------|----------|-------------|---------------|
-| POST | `/api/auth/register` | Register new user | ❌ |
-| POST | `/api/auth/login` | User login | ❌ |
-| POST | `/api/auth/logout` | User logout | ✅ |
-| PUT | `/api/auth/profile` | Update profile | ✅ |
-| PUT | `/api/auth/change-password` | Change password | ✅ |
+| POST | `/api/auth/register` | ลงทะเบียนผู้ใช้ใหม่ | ❌ |
+| POST | `/api/auth/login` | เข้าสู่ระบบ | ❌ |
+| POST | `/api/auth/logout` | ออกจากระบบ | ✅ |
+| PUT | `/api/auth/profile` | อัปเดตโปรไฟล์ | ✅ |
+| PUT | `/api/auth/change-password` | เปลี่ยนรหัสผ่าน | ✅ |
 
-### Expense Endpoints
+### Endpoints สำหรับค่าใช้จ่าย
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | คำอธิบาย | ต้องยืนยันตัวตน |
 |--------|----------|-------------|---------------|
-| GET | `/api/expenses` | Get user expenses | ✅ |
-| POST | `/api/expenses` | Add new expense | ✅ |
-| PUT | `/api/expenses/:id` | Update expense | ✅ |
-| DELETE | `/api/expenses/:id` | Delete expense | ✅ |
+| GET | `/api/expenses` | ดูค่าใช้จ่ายของผู้ใช้ | ✅ |
+| POST | `/api/expenses` | เพิ่มค่าใช้จ่ายใหม่ | ✅ |
+| PUT | `/api/expenses/:id` | อัปเดตค่าใช้จ่าย | ✅ |
+| DELETE | `/api/expenses/:id` | ลบค่าใช้จ่าย | ✅ |
 
-### OCR Endpoints
+### Endpoints สำหรับ OCR
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | คำอธิบาย | ต้องยืนยันตัวตน |
 |--------|----------|-------------|---------------|
-| POST | `/api/ocr/upload` | Upload receipt for OCR | ✅ |
+| POST | `/api/ocr/upload` | อัปโหลดใบเสร็จสำหรับ OCR | ✅ |
 
-### Example Requests
+### ตัวอย่าง Requests
 
-**Register User**
+**ลงทะเบียนผู้ใช้**
 ```javascript
 POST /api/auth/register
 Content-Type: application/json
@@ -205,120 +201,120 @@ Content-Type: application/json
 }
 ```
 
-**Add Expense**
+**เพิ่มค่าใช้จ่าย**
 ```javascript
 POST /api/expenses
 Content-Type: application/json
 
 {
-  "item": "Lunch at Restaurant",
+  "item": "อาหารกลางวัน",
   "amount": 25.50,
-  "category": "Food",
+  "category": "อาหาร",
   "expense_date": "2024-01-15"
 }
 ```
 
-## 📁 Project Structure
+## 📁 โครงสร้างโปรเจกต์
 
 ```
 expense-tracker/
-├── server.js              # Main application entry point
-├── database.js            # MySQL connection setup
-├── auth.js                 # Authentication middleware
-├── package.json            # Dependencies and scripts
-├── .env                    # Environment configuration
-├── .env.example           # Environment template
-├── README.md              # Project documentation
+├── server.js              # ไฟล์หลักของแอปพลิเคชัน
+├── database.js            # การตั้งค่าการเชื่อมต่อ MySQL
+├── auth.js                 # Middleware สำหรับการยืนยันตัวตน
+├── package.json            # Dependencies และ Scripts
+├── .env                    # การตั้งค่า Environment
+├── .env.example           # เทมเพลต Environment
+├── README.md              # เอกสารโปรเจกต์
 ├── .github/
 │   └── copilot-instructions.md
-├── public/                # Frontend assets
-│   ├── index.html         # Landing page
-│   ├── login.html         # Login page
-│   ├── register.html      # Registration page
-│   ├── add.html           # Add expense page
-│   ├── dashboard.html     # Dashboard page
-│   ├── profile.html       # User profile page
+├── public/                # ไฟล์สำหรับ Frontend
+│   ├── index.html
+│   ├── login.html
+│   ├── register.html
+│   ├── add.html
+│   ├── dashboard.html
+│   ├── profile.html
 │   ├── css/
-│   │   └── style.css      # Main stylesheet
+│   │   └── style.css
 │   └── js/
-│       ├── main.js        # Common JavaScript
+│       ├── main.js
 ├── n8n_workflow/
-│   └── Expense-Tracker-Workflow.json # n8n workflow for OCR
-└── uploads/               # Temporary OCR file storage
+│   └── Expense-Tracker-Workflow.json # n8n workflow สำหรับ OCR
+└── uploads/               # ที่เก็บไฟล์ชั่วคราวสำหรับ OCR
 ```
 
-## 🔒 Security Features
+## 🔒 คุณสมบัติด้านความปลอดภัย
 
-- **Password Hashing** - bcrypt with 12 salt rounds
-- **Session Security** - Secure session configuration
-- **SQL Injection Protection** - Prepared statements with mysql2
-- **File Upload Security** - Temporary file cleanup
-- **Route Protection** - Authentication middleware for protected routes
+- **การเข้ารหัสรหัสผ่าน** - ใช้ bcrypt
+- **ความปลอดภัยของเซสชัน** - การตั้งค่าเซสชันที่ปลอดภัย
+- **ป้องกัน SQL Injection** - ใช้ Prepared statements
+- **ความปลอดภัยในการอัปโหลดไฟล์** - การลบไฟล์ชั่วคราว
+- **การป้องกันเส้นทาง** - Middleware สำหรับป้องกันเส้นทาง
 
-## 🌟 Technologies Used
+## 🌟 เทคโนโลยีที่ใช้
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
-- **MySQL2** - MySQL client for Node.js
-- **bcrypt** - Password hashing
-- **express-session** - Session middleware
-- **multer** - File upload handling
-- **axios** - HTTP client for OCR integration
+- **Node.js**
+- **Express.js**
+- **MySQL2**
+- **bcrypt**
+- **express-session**
+- **multer**
+- **axios**
 
 ### Frontend
-- **HTML5** - Modern web markup
-- **CSS3** - Responsive styling
-- **JavaScript ES6+** - Modern JavaScript
-- **SweetAlert2** - Beautiful alerts and notifications
+- **HTML5**
+- **CSS3**
+- **JavaScript ES6+**
+- **SweetAlert2**
 
 ### Database & DevOps
-- **MySQL 8.0** - Relational database
-- **Docker** - Containerization
-- **phpMyAdmin** - Database management
+- **MySQL 8.0**
+- **Docker**
+- **phpMyAdmin**
 
-## 🚀 Deployment
+## 🚀 การนำไปใช้งาน (Deployment)
 
-### Production Setup
+### การตั้งค่าสำหรับ Production
 
-1. **Environment Variables**
-   ```bash
-   NODE_ENV=production
-   DB_HOST=your-mysql-host
-   DB_USER=your-db-user
-   DB_PASSWORD=your-db-password
-   DB_NAME=expense_tracker
-   SESSION_SECRET=your-secret-key
-   OCR_SERVICE_URL=your-ocr-endpoint
-   ```
+1.  **ตั้งค่า Environment Variables**
+    ```bash
+    NODE_ENV=production
+    DB_HOST=your-mysql-host
+    DB_USER=your-db-user
+    DB_PASSWORD=your-db-password
+    DB_NAME=expense_tracker
+    SESSION_SECRET=your-secret-key
+    OCR_SERVICE_URL=your-ocr-endpoint
+    ```
 
-2. **Database Setup**
-   - Ensure MySQL 8.0+ is installed
-   - Create database and user with proper permissions
-   - Tables will be created automatically on first run
+2.  **ตั้งค่าฐานข้อมูล**
+    - ตรวจสอบว่าได้ติดตั้ง MySQL 8.0+
+    - สร้างฐานข้อมูลและผู้ใช้พร้อมสิทธิ์ที่เหมาะสม
+    - ตารางจะถูกสร้างขึ้นโดยอัตโนมัติในการรันครั้งแรก
 
-3. **Process Management**
-   ```bash
-   # Using PM2
-   npm install -g pm2
-   pm2 start server.js --name expense-tracker
-   pm2 startup
-   pm2 save
-   ```
+3.  **การจัดการ Process**
+    ```bash
+    # ใช้ PM2
+    npm install -g pm2
+    pm2 start server.js --name expense-tracker
+    pm2 startup
+    pm2 save
+    ```
 
-## 👨‍💻 Author
+## 👨‍💻 ผู้เขียน
 
 **Adisak034**
 - GitHub: [@Adisak034](https://github.com/Adisak034)
-- Project Link: [https://github.com/Adisak034/Expense-Tracker](https://github.com/Adisak034/Expense-Tracker)
+- ลิงก์โปรเจกต์: [https://github.com/Adisak034/Expense-Tracker](https://github.com/Adisak034/Expense-Tracker)
 
-## 🙏 Acknowledgments
+## 🙏 ขอบคุณ
 
-- [SweetAlert2](https://sweetalert2.github.io/) for beautiful notifications
-- [MySQL](https://www.mysql.com/) for reliable database management
-- [Express.js](https://expressjs.com/) for the robust web framework
-- [Docker](https://www.docker.com/) for containerization support
+- [SweetAlert2](https://sweetalert2.github.io/)
+- [MySQL](https://www.mysql.com/)
+- [Express.js](https://expressjs.com/)
+- [Docker](https://www.docker.com/)
 
 ---
 
-⭐ **Star this repository if it helped you!** ⭐
+⭐ **ถ้าโปรเจกต์นี้มีประโยชน์ อย่าลืมให้ดาวด้วยนะครับ!** ⭐
