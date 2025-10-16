@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config(); // Load environment variables from .env file
 const session = require('express-session');
 const multer = require('multer');
 const axios = require('axios');
@@ -47,8 +48,8 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB file size limit
 }); 
 
-// IMPORTANT: Replace with your actual n8n webhook URL
-const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/upload-webhook';
+// The n8n webhook URL is loaded from the .env file
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 
 // --- Authentication Routes ---
 

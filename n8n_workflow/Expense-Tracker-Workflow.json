@@ -28,10 +28,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -224,
-        96
+        -2096,
+        768
       ],
-      "id": "cc31d01d-4807-4870-ad32-9f14c3983d3a",
+      "id": "6416df17-0a47-4388-bfaf-d439196e969b",
       "name": "If"
     },
     {
@@ -64,10 +64,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
-        0
+        -1872,
+        672
       ],
-      "id": "610c5552-1823-43a3-8a11-11877307e431",
+      "id": "bfa3f535-aec1-48d3-9d7b-5d48c1a0dcc6",
       "name": "ส่งข้อมูล"
     },
     {
@@ -88,43 +88,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
-        192
+        -1872,
+        864
       ],
-      "id": "91fac915-a013-4374-b9da-47846e4d3632",
+      "id": "65e9d9cb-5802-4dfc-ac57-0aee926d6608",
       "name": "ส่งข้อผิดพลาด"
-    },
-    {
-      "parameters": {
-        "operation": "toBinary",
-        "sourceProperty": "data",
-        "options": {
-          "mimeType": "=image/jpeg"
-        }
-      },
-      "type": "n8n-nodes-base.convertToFile",
-      "typeVersion": 1.1,
-      "position": [
-        -672,
-        96
-      ],
-      "id": "7aa0a8d4-3974-4252-b53f-40cbebed3a82",
-      "name": "Convert to File1"
-    },
-    {
-      "parameters": {
-        "operation": "binaryToPropery",
-        "binaryPropertyName": "image0",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.extractFromFile",
-      "typeVersion": 1,
-      "position": [
-        -896,
-        96
-      ],
-      "id": "5967a8b0-3b8f-4e77-9c01-3cf53e791301",
-      "name": "Extract from File1"
     },
     {
       "parameters": {
@@ -137,10 +105,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1152,
-        112
+        -2544,
+        768
       ],
-      "id": "adfdbe5f-f229-4703-a3be-893fc1922ad6",
+      "id": "4d65678f-7dbc-4a81-b3d2-e4d0bf8aa6b3",
       "name": "Webhook1",
       "webhookId": "16a1e5f2-cad1-430c-832a-295cfdfe8f5d"
     },
@@ -173,10 +141,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -448,
-        96
+        -2320,
+        768
       ],
-      "id": "dfbd6db7-19d2-482f-ab89-dbd5b7eece7b",
+      "id": "c0870441-78eb-4a9d-8daf-45456cf365a4",
       "name": "iApp Recipt OCR"
     }
   ],
@@ -200,33 +168,11 @@
         ]
       ]
     },
-    "Convert to File1": {
-      "main": [
-        [
-          {
-            "node": "iApp Recipt OCR",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract from File1": {
-      "main": [
-        [
-          {
-            "node": "Convert to File1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook1": {
       "main": [
         [
           {
-            "node": "Extract from File1",
+            "node": "iApp Recipt OCR",
             "type": "main",
             "index": 0
           }
@@ -247,12 +193,14 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "ad456c40-8545-4082-b55f-fc34768ffaa4",
+  "versionId": "1f89dc29-e645-45fc-99b4-a4be86326b2e",
   "meta": {
-    "instanceId": "076ba138cc2ab445b0288e2c3529d9e850d9b8b35c9561053b4de7828992d5c1"
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f740b707eb37c7ea0a05c56d07c5b3c5fb17ccdec792d3b0452ea7542a04d2b0"
   },
-  "id": "dEBjY5ZIVBcfrl5V",
+  "id": "U27bObFkbUf9yvIM",
   "tags": []
 }

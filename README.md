@@ -1,6 +1,7 @@
-# 💰 Expense Tracker (โปรแกรมติดตามค่าใช้จ่าย)
+# 💰 Expense Tracker
 
 แอปพลิเคชันติดตามค่าใช้จ่ายที่ทันสมัยและมีฟีเจอร์ครบครัน สร้างขึ้นด้วย Node.js, Express และ MySQL พร้อมระบบยืนยันตัวตนผู้ใช้, การประมวลผลใบเสร็จด้วย OCR และ UI ที่สวยงามและตอบสนองต่อทุกอุปกรณ์
+A modern and feature-rich expense tracking application built with Node.js, Express, and MySQL, featuring user authentication, OCR receipt processing, and a beautiful, responsive UI.
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
@@ -9,53 +10,64 @@
 ![n8n](https://img.shields.io/badge/n8n-EA4B71?style=for-the-badge&logo=n8n&logoColor=white)
 
 ## ✨ คุณสมบัติเด่น
+## ✨ Key Features
 
 ### 🔐 ระบบยืนยันตัวตนผู้ใช้
-- **การลงทะเบียนและเข้าสู่ระบบที่ปลอดภัย** - เข้ารหัสผ่านด้วย bcrypt
-- **การจัดการเซสชัน** - ใช้ Express-session เพื่อความปลอดภัย
-- **เส้นทางที่ป้องกัน** - การป้องกันเส้นทางด้วย Middleware
-- **การจัดการโปรไฟล์** - หน้าโปรไฟล์พร้อมสถิติการใช้งาน
+### 🔐 User Authentication System
+- **Secure Registration and Login** - Password hashing with bcrypt.
+- **Session Management** - Uses Express-session for security.
+- **Protected Routes** - Route protection with middleware.
+- **Profile Management** - Profile page with usage statistics.
 
 ### 💸 การจัดการค่าใช้จ่าย
-- **เพิ่มค่าใช้จ่าย** - บันทึกค่าใช้จ่ายพร้อมหมวดหมู่ได้อย่างรวดเร็ว
-- **แดชบอร์ด** - ภาพรวมค่าใช้จ่ายที่สวยงาม
-- **การจัดการหมวดหมู่** - จัดระเบียบค่าใช้จ่ายตามหมวดหมู่
-- **การกรองตามวันที่** - กรองข้อมูลค่าใช้จ่ายตามช่วงวันที่
-- **ข้อมูลเฉพาะผู้ใช้** - ผู้ใช้แต่ละคนจะเห็นเฉพาะข้อมูลของตนเอง
+### 💸 Expense Management
+- **Add Expenses** - Quickly record expenses with categories.
+- **Dashboard** - Beautiful overview of expenses.
+- **Category Management** - Organize expenses by category.
+- **Date Filtering** - Filter expense data by date range.
+- **User-Specific Data** - Each user only sees their own data.
 
 ### 📱 UI/UX ที่ทันสมัย
-- **การออกแบบที่ตอบสนอง** - รองรับการใช้งานบนมือถือเป็นหลักพร้อมเมนูนำทางด้านล่าง
-- **การแจ้งเตือนด้วย SweetAlert2** - การแจ้งเตือนและยืนยันที่สวยงาม
-- **อินเทอร์เฟซที่สะอาดตา** - ทันสมัยและใช้งานง่าย
+### 📱 Modern UI/UX
+- **Responsive Design** - Primarily supports mobile usage with a bottom navigation menu.
+- **SweetAlert2 Notifications** - Beautiful alerts and confirmations.
+- **Clean Interface** - Modern and easy to use.
 
 ### 🔍 การผสานการทำงานกับ OCR
-- **การประมวลผลใบเสร็จ** - อัปโหลดใบเสร็จเพื่อดึงข้อมูลอัตโนมัติ
-- **n8n Workflow** - ใช้ n8n workflow ในการประมวลผลภาพ, เรียกใช้ OCR API ภายนอก, และส่งข้อมูลกลับมายังแอปพลิเคชัน (ดู [การตั้งค่า n8n Workflow](#-n8n-workflow-setup))
-- **การลบไฟล์อัตโนมัติ** - ไฟล์ชั่วคราวจะถูกลบออกโดยอัตโนมัติ
-- **อัปเดตแบบเรียลไทม์** - ใช้ Server-Sent Events (SSE) เพื่อแจ้งเตือนผู้ใช้เมื่อการประมวลผล OCR เสร็จสิ้น
+### 🔍 OCR Integration
+- **Receipt Processing** - Upload receipts for automatic data extraction.
+- **n8n Workflow** - Uses an n8n workflow to process images, call external OCR APIs, and send data back to the application (see [n8n Workflow Setup](#-n8n-workflow-setup)).
+- **Automatic File Deletion** - Temporary files are automatically removed.
+- **Real-time Updates** - Uses Server-Sent Events (SSE) to notify users when OCR processing is complete.
 
 ## 🚀 เริ่มต้นใช้งาน
+## 🚀 Getting Started
 
 ### สิ่งที่ต้องมี
+### Prerequisites
 
 - **Node.js** (เวอร์ชัน 14 หรือสูงกว่า)
 - **Docker** (สำหรับฐานข้อมูล MySQL)
 - **npm**
+- **Node.js** (version 14 or higher)
+- **Docker** (for MySQL database)
+- **npm**
 
 ### การติดตั้ง
+### Installation
 
-1.  **โคลนโปรเจกต์**
+1.  **Clone the project**
     ```bash
     git clone https://github.com/Adisak034/Expense-Tracker.git
     cd Expense-Tracker
     ```
 
-2.  **ติดตั้ง Dependencies**
+2.  **Install Dependencies**
     ```bash
     npm install
     ```
 
-3.  **ตั้งค่าฐานข้อมูล MySQL**
+3.  **Set up MySQL Database**
     ```bash
     docker run --name expense-mysql \
       -e MYSQL_ROOT_PASSWORD=rootpassword \
@@ -65,26 +77,29 @@
       -p 3306:3306 -d mysql:8.0
     ```
 
-4.  **ตั้งค่า Environment**
+4.  **Set up Environment Variables**
     ```bash
-    # คัดลอกและแก้ไขไฟล์ .env
+    # Copy and edit the .env file
     cp .env.example .env
     ```
 
-5.  **รันแอปพลิเคชัน**
+5.  **Run the application**
     ```bash
     npm start
     ```
 
-6.  **เข้าใช้งาน**
-    - เปิดเบราว์เซอร์และไปที่: `http://localhost:3000`
-    - ลงทะเบียนผู้ใช้ใหม่หรือเข้าสู่ระบบด้วยบัญชีที่มีอยู่
+6.  **Access the application**
+    - Open your browser and go to: `http://localhost:3000`
+    - Register a new user or log in with an existing account.
 
 ## ⚙️ การตั้งค่า n8n Workflow
+## ⚙️ n8n Workflow Setup
 
 โปรเจกต์นี้ใช้ n8n เพื่อจัดการกระบวนการ OCR (Optical Character Recognition) โดยเซิร์ฟเวอร์ Node.js จะอัปโหลดภาพใบเสร็จไปยัง n8n webhook ซึ่งจะประมวลผลภาพและส่งข้อมูลที่ดึงออกมาได้กลับมา
+This project uses n8n to manage the OCR (Optical Character Recognition) process. The Node.js server uploads receipt images to an n8n webhook, which then processes the images and sends the extracted data back.
 
 ### 1. ตั้งค่า n8n
+### 1. n8n Setup
 
 วิธีที่ง่ายที่สุดในการรัน n8n คือใช้ Docker:
 ```bash

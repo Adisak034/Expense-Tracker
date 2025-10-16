@@ -1,11 +1,12 @@
 const mysql = require('mysql2/promise');
+require('dotenv').config(); // Load environment variables from .env file
 
 // MySQL configuration
 const pool = mysql.createPool({
-  user: process.env.DB_USER || 'expense_user',
+  user: process.env.DB_USER || 'root',
   host: process.env.DB_HOST || 'localhost',
   database: process.env.DB_NAME || 'expense_tracker',
-  password: process.env.DB_PASSWORD || 'mypassword',
+  password: process.env.DB_PASSWORD || 'Password123',
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
