@@ -1,0 +1,48 @@
+# docker-compose.yml
+# ไฟล์สำหรับกำหนดค่าให้ Docker รัน MySQL และ phpMyAdmin พร้อมกัน
+
+
+services:
+  # Service ที่ 1: ฐานข้อมูล MySQL
+  db:
+    image: mysql:8.0
+    container_name: mysql-db-local
+    restart: unless-stopped
+    environment:
+      # !!! สำคัญมาก: เปลี่ยน 'your_strong_password' เป็นรหัสผ่านของคุณเอง !!!
+      MYSQL_ROOT_PASSWORD: 'mypassword'
+      MYSQL_DATABASE: 'expense_tracker' # สามารถตั้งชื่อฐานข้อมูลเริ่มต้นได้ที่นี่ (ถ้าไม่ใส่ก็ได้)
+    volumes:
+      # ส่วนนี้จะทำให้ข้อมูลใน database ของเราไม่หายไป แม้จะปิด-เปิด container ใหม่
+      - db_data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    networks:
+      - app-network
+
+  # Service ที่ 2: โปรแกรมจัดการฐานข้อมูล phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma-ui
+    restart: unless-stopped
+    ports:
+      # ทำให้เราสามารถเข้าเว็บ phpMyAdmin ผ่านพอร์ต 8080 ของเครื่องเราได้
+      - "8080:80"
+    environment:
+      # บอก phpMyAdmin ว่าฐานข้อมูลของเราอยู่ที่ไหน (ใช้ชื่อ service 'db' ที่เราตั้งไว้ข้างบน)
+      PMA_HOST: 'db'
+      # ใส่รหัสผ่านของ root ให้ตรงกับที่ตั้งไว้ใน service 'db'
+      MYSQL_ROOT_PASSWORD: 'mypassword'
+    depends_on:
+      - db # สั่งให้เริ่มทำงานหลังจาก service 'db' ทำงานแล้วเท่านั้น
+    networks:
+      - app-network
+
+# กำหนดค่า Network ให้ service ทั้งสองคุยกันได้
+networks:
+  app-network:
+    driver: bridge
+
+# กำหนดค่า Volume สำหรับเก็บข้อมูล
+volumes:
+  db_data:
